@@ -1997,6 +1997,73 @@
         .sync-status:hover {
             background: rgba(0, 0, 0, 0.9);
         }
+
+        /* Notification badge */
+        .notification-badge {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: var(--rose);
+            color: white;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 200;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .notification-badge.show {
+            display: flex;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Connection error banner */
+        .connection-error {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: rgba(251, 113, 133, 0.95);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            z-index: 150;
+            backdrop-filter: blur(8px);
+            display: none;
+        }
+
+        .connection-error.show {
+            display: block;
+        }
+
+        .retry-btn {
+            background: white;
+            color: var(--rose);
+            border: none;
+            border-radius: 4px;
+            padding: 2px 8px;
+            margin-left: 12px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -2015,6 +2082,19 @@
     <div class="sync-status" id="syncStatus" onclick="manualSync()">
         <i class="fas fa-cloud"></i>
         <span id="syncStatusText">กำลังเชื่อมต่อ...</span>
+    </div>
+
+    <!-- NOTIFICATION BADGE -->
+    <div class="notification-badge" id="notificationBadge">
+        <i class="fas fa-sync-alt"></i>
+        <span id="notificationText">มีข้อมูลอัปเดต</span>
+    </div>
+
+    <!-- CONNECTION ERROR BANNER -->
+    <div class="connection-error" id="connectionError">
+        <i class="fas fa-exclamation-triangle"></i>
+        ไม่สามารถเชื่อมต่อกับ Google Sheets ได้ กำลังพยายามเชื่อมต่อใหม่...
+        <button class="retry-btn" onclick="manualSync()">ลองใหม่</button>
     </div>
 
     <!-- HEADER -->
@@ -2458,7 +2538,9 @@
                                     class="form-input" id="s_tagline" value="จัดการคิวงานออกแบบ"></div>
                             <div class="form-group"><label class="form-label">API Endpoint (Google Apps
                                     Script)</label><input class="form-input" id="s_apiUrl"
-                                    placeholder="https://script.google.com/macros/s/…/exec"></div>
+                                    placeholder="https://script.google.com/macros/s/…/exec"
+                                    value="https://script.google.com/macros/s/AKfycbww8AEuq9HZqOoGvAUmpKVO0zO48rmilA8UIEi6Kpg7VDW-xQ_CS9zjycPwkRuuBfaf/exec">
+                            </div>
                             <div class="form-group">
                                 <button class="btn btn-sm btn-test" onclick="testGoogleSheetsConnection()"
                                     style="width: 100%; margin-top: 8px;">
@@ -2689,6 +2771,9 @@
     </div>
 
     <script>
+        // ─── GOOGLE SHEETS API URL ─────────────────────────────────────────
+        const GOOGLE_SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbxbloQz9_f7do7M889PuPQ_qF_XhxzBB1mQL2Tl7sebz5NXBLkrTeWUoYBOuMtrIEV8/exec';
+
         // ─── STATE ────────────────────────────────────────────────────────
         let state = {
             tasks: [], isAdmin: false, filter: 'all', view: 'list',
@@ -2700,7 +2785,7 @@
                 announcement: '📢 ยินดีต้อนรับสู่ระบบจัดการคิว — ติดตามสถานะงานของคุณได้ที่นี่',
                 notes: '', nextDate: '',
                 fbUrl: '#', igUrl: '#', ttUrl: '#', lnUrl: '#',
-                adminPass: 'admin1234', showBanner: true, apiUrl: '',
+                adminPass: 'admin1234', showBanner: true, apiUrl: GOOGLE_SHEETS_API_URL,
                 profileImg: '', bannerImg: '',
                 socialVisible: {
                     fb: true,
@@ -2724,7 +2809,8 @@
                 data: null,
                 lastSync: 0
             },
-            activityLog: []
+            activityLog: [],
+            lastDataHash: null  // สำหรับตรวจจับการเปลี่ยนแปลง
         };
 
         // รายการฟอนต์ทั้งหมดที่รองรับภาษาไทย
@@ -2759,9 +2845,38 @@
             done: { label: 'เสร็จแล้ว', cls: 'badge-done', pct: 100 }
         };
 
+        // ─── HELPER FUNCTIONS ─────────────────────────────────────────────
+        function computeDataHash() {
+            return JSON.stringify({
+                tasks: state.tasks,
+                settings: state.settings
+            });
+        }
+
+        function showNotification(message) {
+            const badge = document.getElementById('notificationBadge');
+            const text = document.getElementById('notificationText');
+            text.textContent = message;
+            badge.classList.add('show');
+            setTimeout(() => {
+                badge.classList.remove('show');
+            }, 5000);
+        }
+
+        function showConnectionError(show) {
+            const errorBanner = document.getElementById('connectionError');
+            if (show) {
+                errorBanner.classList.add('show');
+            } else {
+                errorBanner.classList.remove('show');
+            }
+        }
+
         // ─── GOOGLE SHEETS SYNC FUNCTIONS ─────────────────────────────────
         let syncInProgress = false;
         let autoSyncInterval = null;
+        let connectionRetryCount = 0;
+        let lastSuccessfulSync = 0;
 
         function updateSyncStatus(status, message) {
             const syncStatusDiv = document.getElementById('syncStatus');
@@ -2772,12 +2887,15 @@
             if (status === 'synced') {
                 syncStatusDiv.classList.add('synced');
                 syncTextSpan.innerHTML = message || 'ซิงค์ข้อมูลสำเร็จ';
+                showConnectionError(false);
+                connectionRetryCount = 0;
             } else if (status === 'syncing') {
                 syncStatusDiv.classList.add('syncing');
                 syncTextSpan.innerHTML = message || 'กำลังซิงค์...';
             } else if (status === 'error') {
                 syncStatusDiv.classList.add('error');
                 syncTextSpan.innerHTML = message || 'ซิงค์ข้อมูลล้มเหลว';
+                showConnectionError(true);
             }
         }
 
@@ -2827,15 +2945,12 @@
                 localStorage.removeItem('queueflow_activity_log');
                 updateActivityLogUI();
                 toast('ล้างประวัติการเปลี่ยนแปลงเรียบร้อยแล้ว', 'success');
+                pushOnChange();
             }
         }
 
         async function syncWithGoogleSheets() {
-            const apiUrl = state.settings.apiUrl;
-            if (!apiUrl) {
-                updateSyncStatus('error', 'ไม่ได้ตั้งค่า API');
-                return false;
-            }
+            const apiUrl = state.settings.apiUrl || GOOGLE_SHEETS_API_URL;
 
             if (syncInProgress) {
                 return false;
@@ -2845,17 +2960,25 @@
             updateSyncStatus('syncing', 'กำลังซิงค์ข้อมูล...');
 
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'fetchAllData' })
+                    body: JSON.stringify({ action: 'fetchAllData' }),
+                    signal: controller.signal
                 });
 
-                if (!response.ok) throw new Error('Network response error');
+                clearTimeout(timeoutId);
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
                 const data = await response.json();
 
                 if (data.success && data.data) {
+                    const oldHash = computeDataHash();
+
                     // อัปเดตข้อมูลจาก Google Sheets
                     if (data.data.tasks) {
                         state.tasks = data.data.tasks;
@@ -2877,6 +3000,10 @@
                                 rose: '#fb7185', text: '#efefef', bg: '#080808', card: '#111111'
                             };
                         }
+                        // ตรวจสอบและตั้งค่า API URL
+                        if (!state.settings.apiUrl) {
+                            state.settings.apiUrl = GOOGLE_SHEETS_API_URL;
+                        }
                     }
 
                     if (data.data.activityLog) {
@@ -2886,9 +3013,16 @@
                     // อัปเดต cache
                     state.cache.data = { tasks: state.tasks, settings: state.settings };
                     state.cache.lastSync = Date.now();
+                    lastSuccessfulSync = Date.now();
 
                     // บันทึกลง localStorage
                     saveToLocal();
+
+                    // ตรวจสอบการเปลี่ยนแปลงและแจ้งเตือน
+                    const newHash = computeDataHash();
+                    if (oldHash !== newHash && oldHash !== null) {
+                        showNotification('มีการอัปเดตข้อมูลจาก Google Sheets');
+                    }
 
                     // รีเฟรช UI
                     applySettings();
@@ -2911,8 +3045,14 @@
 
             } catch (error) {
                 console.error('Sync error:', error);
-                updateSyncStatus('error', 'ซิงค์ข้อมูลล้มเหลว: ' + error.message);
-                toast('ไม่สามารถเชื่อมต่อ Google Sheets ได้: ' + error.message, 'error');
+                let errorMessage = error.message;
+                if (error.name === 'AbortError') {
+                    errorMessage = 'การเชื่อมต่อหมดเวลา';
+                } else if (error.message === 'Failed to fetch') {
+                    errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์';
+                }
+                updateSyncStatus('error', 'ซิงค์ล้มเหลว: ' + errorMessage);
+                toast('ไม่สามารถเชื่อมต่อ Google Sheets ได้: ' + errorMessage, 'error');
                 return false;
             } finally {
                 syncInProgress = false;
@@ -2920,12 +3060,12 @@
         }
 
         async function pushToGoogleSheets() {
-            const apiUrl = state.settings.apiUrl;
-            if (!apiUrl) {
-                return false;
-            }
+            const apiUrl = state.settings.apiUrl || GOOGLE_SHEETS_API_URL;
 
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
+
                 const payload = {
                     action: 'saveAllData',
                     tasks: state.tasks,
@@ -2936,10 +3076,13 @@
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
                 });
 
-                if (!response.ok) throw new Error('Network response error');
+                clearTimeout(timeoutId);
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 const result = await response.json();
                 return result.success === true;
@@ -2961,10 +3104,9 @@
 
         // ฟังก์ชัน push ข้อมูลเมื่อมีการเปลี่ยนแปลง
         async function pushOnChange() {
-            if (state.settings.apiUrl) {
+            if (state.settings.apiUrl && !syncInProgress) {
                 const success = await pushToGoogleSheets();
                 if (success) {
-                    // อัปเดต cache หลัง push สำเร็จ
                     state.cache.data = { tasks: state.tasks, settings: state.settings };
                     state.cache.lastSync = Date.now();
                     updateSyncStatus('synced', 'บันทึกข้อมูลสำเร็จ');
@@ -3006,6 +3148,7 @@
 
             toast('ส่งออกข้อมูลเป็น CSV สำเร็จ', 'success');
             addToActivityLog('ส่งออกข้อมูล', 'CSV');
+            pushOnChange();
         }
 
         function exportToExcel() {
@@ -3014,7 +3157,6 @@
                 return;
             }
 
-            // สร้าง HTML table สำหรับ Excel
             const headers = ['ID', 'Order ID', 'ชื่อลูกค้า', 'ประเภทงาน', 'ช่องทาง', 'ข้อมูลติดต่อ', 'ราคา', 'สถานะ', 'เร่งด่วน', 'วันที่รับงาน', 'กำหนดส่ง', 'หมายเหตุ', 'คิว'];
             let html = '<html><head><meta charset="UTF-8"><title>QueueFlow Export</title></head><body><table border="1">';
             html += '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
@@ -3052,6 +3194,7 @@
 
             toast('ส่งออกข้อมูลเป็น Excel สำเร็จ', 'success');
             addToActivityLog('ส่งออกข้อมูล', 'Excel');
+            pushOnChange();
         }
 
         async function importDataFromFile(event) {
@@ -3069,7 +3212,6 @@
                 for (let i = 1; i < lines.length; i++) {
                     if (!lines[i].trim()) continue;
 
-                    // แยก CSV (แบบง่าย)
                     const values = [];
                     let inQuotes = false;
                     let currentValue = '';
@@ -3134,7 +3276,6 @@
             const ctx = document.getElementById('statsChart')?.getContext('2d');
             if (!ctx) return;
 
-            // สร้างข้อมูลสถิติ 7 วันล่าสุด
             const today = new Date();
             const dates = [];
             const completedCounts = [];
@@ -3592,20 +3733,22 @@
 
         // ─── TEST CONNECTION ─────────────────────────────────────────────
         async function testGoogleSheetsConnection() {
-            const apiUrl = state.settings.apiUrl;
-            if (!apiUrl) {
-                toast('กรุณาตั้งค่า API Endpoint ในหน้าการตั้งค่า', 'error');
-                return false;
-            }
+            const apiUrl = state.settings.apiUrl || GOOGLE_SHEETS_API_URL;
 
             updateSyncStatus('syncing', 'กำลังทดสอบการเชื่อมต่อ...');
 
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'testConnection' })
+                    body: JSON.stringify({ action: 'testConnection' }),
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
 
                 const result = await response.json();
 
@@ -3619,7 +3762,13 @@
                     return false;
                 }
             } catch (error) {
-                toast('ไม่สามารถเชื่อมต่อ API ได้: ' + error.message, 'error');
+                let errorMessage = error.message;
+                if (error.name === 'AbortError') {
+                    errorMessage = 'การเชื่อมต่อหมดเวลา';
+                } else if (error.message === 'Failed to fetch') {
+                    errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์';
+                }
+                toast('ไม่สามารถเชื่อมต่อ API ได้: ' + errorMessage, 'error');
                 updateSyncStatus('error', 'เชื่อมต่อล้มเหลว');
                 return false;
             }
@@ -3652,11 +3801,11 @@
             // เริ่ม sync กับ Google Sheets
             await syncWithGoogleSheets();
 
-            // ตั้ง auto sync ทุก 5 นาที
+            // ตั้ง auto sync ทุก 5 วินาที (ตามที่ร้องขอ)
             if (autoSyncInterval) clearInterval(autoSyncInterval);
             autoSyncInterval = setInterval(async () => {
                 await syncWithGoogleSheets();
-            }, 5 * 60 * 1000);
+            }, 5000); // 5 วินาที
 
             setTimeout(() => document.getElementById('loadingOverlay').classList.add('hidden'), 700);
         });
@@ -3677,6 +3826,9 @@
                         }
                         if (!state.settings.selectedFontDisplay) {
                             state.settings.selectedFontDisplay = 'Kanit';
+                        }
+                        if (!state.settings.apiUrl) {
+                            state.settings.apiUrl = GOOGLE_SHEETS_API_URL;
                         }
                     }
                 }
@@ -3750,7 +3902,7 @@
             const s = state.settings;
             document.getElementById('s_shopName').value = s.shopName || '';
             document.getElementById('s_tagline').value = s.tagline || '';
-            document.getElementById('s_apiUrl').value = s.apiUrl || '';
+            document.getElementById('s_apiUrl').value = s.apiUrl || GOOGLE_SHEETS_API_URL;
             document.getElementById('s_announcement').value = s.announcement || '';
             document.getElementById('s_notes').value = s.notes || '';
             document.getElementById('s_nextDate').value = s.nextDate || '';
