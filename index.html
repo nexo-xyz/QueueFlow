@@ -2669,9 +2669,7 @@
 
     <script>
         // ==================== CONFIGURATION ====================
-        // ใส่ URL ของ Google Apps Script Web App ที่คุณสร้าง (Deploy เป็น Web App)
-        // โดยต้อง Allow access สำหรับ任何人 (Execute as me, Access: Anyone)
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw3uVPgq9CxJ5pBWZR2iZMCH9gJ6i3UgzR5UlnEycCSHTBnGS6iWtvd5J-gWLzTeOUX/exec"; // <--- แก้ไขเป็น URL ของคุณ
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2lTBIvi4uIl9lcvs0xx-fwaBTCVm6EIUBYuViy31Dq8HZ4r-sW45QnbmFrYPQtqtY/exec";
 
         // ==================== STATE ====================
         let state = {
@@ -2718,27 +2716,26 @@
         let chartInstance = null;
         let isLoading = false;
 
-        // รายการฟอนต์
         const availableFonts = [
-            { name: 'Sarabun', category: 'sans-serif', preview: 'สวัสดี,Nexo' },
-            { name: 'Kanit', category: 'sans-serif', preview: 'สวัสดี,Nexo' },
-            { name: 'Prompt', category: 'sans-serif', preview: 'สวัสดี,Nexo' },
-            { name: 'IBM Plex Sans Thai', category: 'sans-serif', preview: 'สวัสดี,Nexo' },
-            { name: 'Mitr', category: 'sans-serif', preview: 'สวัสดี,Nexo' },
-            { name: 'Noto Sans Thai', category: 'sans-serif', preview: 'สวัสดี,Nexo' },
-            { name: 'Thasadith', category: 'serif', preview: 'สวัสดี,Nexo' },
-            { name: 'Chakra Petch', category: 'sans-serif', preview: 'สวัสดี,Nexo' },
-            { name: 'K2D', category: 'sans-serif', preview: 'สวัสดี,Nexo' },
-            { name: 'KoHo', category: 'sans-serif', preview: 'สวัสดี,Nexo' },
-            { name: 'Mali', category: 'cursive', preview: 'สวัสดี,Nexo' },
-            { name: 'Niramit', category: 'sans-serif', preview: 'สวัสดี,Nexo' },
-            { name: 'Itim', category: 'cursive', preview: 'สวัสดี,Nexo' },
-            { name: 'Caveat', category: 'cursive', preview: 'สวัสดี,Nexo' },
-            { name: 'Comfortaa', category: 'sans-serif', preview: 'สวัสดี,Nexo' },
-            { name: 'Montserrat', category: 'sans-serif', preview: 'สวัสดี,Nexo' },
-            { name: 'Playfair Display', category: 'serif', preview: 'สวัสดี,Nexo' },
-            { name: 'Roboto Mono', category: 'monospace', preview: 'สวัสดี,Nexo' },
-            { name: 'Space Grotesk', category: 'sans-serif', preview: 'สวัสดี,Nexo' }
+            { name: 'Sarabun', category: 'sans-serif', preview: 'สวัสดี' },
+            { name: 'Kanit', category: 'sans-serif', preview: 'สวัสดี' },
+            { name: 'Prompt', category: 'sans-serif', preview: 'สวัสดี' },
+            { name: 'IBM Plex Sans Thai', category: 'sans-serif', preview: 'สวัสดี' },
+            { name: 'Mitr', category: 'sans-serif', preview: 'สวัสดี' },
+            { name: 'Noto Sans Thai', category: 'sans-serif', preview: 'สวัสดี' },
+            { name: 'Thasadith', category: 'serif', preview: 'สวัสดี' },
+            { name: 'Chakra Petch', category: 'sans-serif', preview: 'สวัสดี' },
+            { name: 'K2D', category: 'sans-serif', preview: 'สวัสดี' },
+            { name: 'KoHo', category: 'sans-serif', preview: 'สวัสดี' },
+            { name: 'Mali', category: 'cursive', preview: 'สวัสดี' },
+            { name: 'Niramit', category: 'sans-serif', preview: 'สวัสดี' },
+            { name: 'Itim', category: 'cursive', preview: 'สวัสดี' },
+            { name: 'Caveat', category: 'cursive', preview: 'สวัสดี' },
+            { name: 'Comfortaa', category: 'sans-serif', preview: 'สวัสดี' },
+            { name: 'Montserrat', category: 'sans-serif', preview: 'สวัสดี' },
+            { name: 'Playfair Display', category: 'serif', preview: 'สวัสดี' },
+            { name: 'Roboto Mono', category: 'monospace', preview: 'สวัสดี' },
+            { name: 'Space Grotesk', category: 'sans-serif', preview: 'สวัสดี' }
         ];
 
         const STATUS = {
@@ -2750,6 +2747,33 @@
             done: { label: 'เสร็จแล้ว', cls: 'badge-done', pct: 100 }
         };
 
+        // ==================== DATE HELPER FUNCTIONS ====================
+        function parseDateToYYYYMMDD(dateStr) {
+            if (!dateStr) return '';
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+                const parts = dateStr.split('/');
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
+                const parts = dateStr.split('-');
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+                return date.toISOString().split('T')[0];
+            }
+            return '';
+        }
+
+        function formatDate(d) {
+            if (!d) return '';
+            const yyyymmdd = parseDateToYYYYMMDD(d);
+            if (!yyyymmdd) return '';
+            const date = new Date(yyyymmdd + 'T00:00:00');
+            return date.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
         // ==================== GOOGLE SHEETS API ====================
         async function callGoogleAppsScript(action, data = {}) {
             if (isLoading) return null;
@@ -2759,23 +2783,12 @@
             try {
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // เนื่องจาก CORS บน GAS Web App ใช้ no-cors
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({ action: action, ...data })
                 });
 
-                // ด้วย mode: 'no-cors' เราไม่สามารถอ่าน response body ได้
-                // ดังนั้นเราจะใช้วิธีอื่น: GAS จะตอบกลับด้วย JSON แต่เนื่องจาก no-cors เราต้องใช้ JSONP หรือเปลี่ยนวิธี
-                // เปลี่ยนมาใช้ fetch แบบปกติ โดยตั้ง CORS ใน GAS แล้วใช้ 'cors'
-                // ลองใหม่โดยไม่ใช้ no-cors
-                const response2 = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ action: action, ...data })
-                });
-
-                if (!response2.ok) throw new Error(`HTTP ${response2.status}`);
-                const result = await response2.json();
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const result = await response.json();
                 return result;
             } catch (error) {
                 console.error('API Error:', error);
@@ -2787,27 +2800,21 @@
             }
         }
 
-        // โหลดข้อมูลทั้งหมดจาก Google Sheets
         async function loadAllData() {
             const result = await callGoogleAppsScript('getAllData');
             if (result && result.success) {
-                // โหลด tasks
                 if (result.tasks && Array.isArray(result.tasks)) {
                     state.tasks = result.tasks;
                 }
-                // โหลด settings
                 if (result.settings) {
                     state.settings = { ...state.settings, ...result.settings };
                     if (!state.settings.socialVisible) state.settings.socialVisible = { fb: true, ig: true, tt: true, ln: true };
                     if (!state.settings.selectedFontPrimary) state.settings.selectedFontPrimary = 'Sarabun';
                     if (!state.settings.selectedFontDisplay) state.settings.selectedFontDisplay = 'Kanit';
                 }
-                // โหลด activity log
                 if (result.activityLog && Array.isArray(result.activityLog)) {
                     state.activityLog = result.activityLog;
                 }
-
-                // อัปเดต UI
                 applySettings();
                 updateSocialVisibility();
                 applyCustomTheme(state.settings.customTheme);
@@ -2817,13 +2824,10 @@
                 renderCalendar();
                 updateChart();
                 updateActivityLogUI();
-
                 toast('โหลดข้อมูลจาก Google Sheets สำเร็จ', 'success');
                 return true;
             } else {
-                // ถ้าไม่มีข้อมูลหรือ error ให้ใช้ default
                 if (state.tasks.length === 0) {
-                    // สร้างข้อมูลตัวอย่าง
                     state.tasks = [
                         { id: 'q1', orderId: 'ORD-001', customer: 'คุณนภา', type: 'Logo Design', channel: 'LINE', contact: '@napa_art', price: 1500, status: 'inprogress', urgent: false, date: new Date().toISOString().split('T')[0], deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], note: 'ต้องการโลโก้มินิมอล 2 version', num: 1 },
                         { id: 'q2', orderId: 'INV-2024-002', customer: 'คุณสมชาย', type: 'Banner Facebook', channel: 'Facebook', contact: 'fb.com/somchai', price: 800, status: 'review', urgent: true, date: new Date().toISOString().split('T')[0], deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], note: '', num: 2 },
@@ -2832,13 +2836,11 @@
                         { id: 'q5', orderId: 'XYZ-005', customer: 'บริษัท XYZ', type: 'Infographic', channel: 'LINE', contact: '@xyz_corp', price: 2800, status: 'fixing', urgent: true, date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], deadline: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], note: 'แก้ตัวเลขสถิติหน้า 2', num: 5 },
                     ];
                 }
-                // บันทึกข้อมูลตัวอย่างไปยัง Google Sheets
                 await syncAllData();
                 return true;
             }
         }
 
-        // ซิงค์ข้อมูลทั้งหมดไปยัง Google Sheets
         async function syncAllData() {
             const result = await callGoogleAppsScript('syncAllData', {
                 tasks: JSON.stringify(state.tasks),
@@ -2854,7 +2856,6 @@
             }
         }
 
-        // บันทึก tasks เท่านั้น
         async function syncTasks() {
             const result = await callGoogleAppsScript('syncTasks', {
                 tasks: JSON.stringify(state.tasks)
@@ -2862,7 +2863,6 @@
             return result && result.success;
         }
 
-        // บันทึก settings เท่านั้น
         async function syncSettings() {
             const result = await callGoogleAppsScript('syncSettings', {
                 settings: JSON.stringify(state.settings)
@@ -2870,7 +2870,6 @@
             return result && result.success;
         }
 
-        // บันทึก activity log เท่านั้น
         async function syncActivityLog() {
             const result = await callGoogleAppsScript('syncActivityLog', {
                 activityLog: JSON.stringify(state.activityLog.slice(0, 100))
@@ -2878,7 +2877,6 @@
             return result && result.success;
         }
 
-        // ==================== HELPER FUNCTIONS ====================
         function addToActivityLog(action, details) {
             const logEntry = {
                 timestamp: new Date().toISOString(),
@@ -2890,7 +2888,7 @@
             state.activityLog.unshift(logEntry);
             if (state.activityLog.length > 100) state.activityLog = state.activityLog.slice(0, 100);
             updateActivityLogUI();
-            syncActivityLog(); // บันทึกไป Google Sheets
+            syncActivityLog();
         }
 
         function updateActivityLogUI() {
@@ -2919,7 +2917,6 @@
             }
         }
 
-        // ==================== DATA IMPORT/EXPORT (ทำงานผ่าน Google Sheets) ====================
         function exportToCSV() {
             if (state.tasks.length === 0) {
                 toast('ไม่มีข้อมูลที่จะส่งออก', 'error');
@@ -3041,7 +3038,6 @@
             event.target.value = '';
         }
 
-        // ==================== CHART ====================
         function updateChart() {
             const ctx = document.getElementById('statsChart')?.getContext('2d');
             if (!ctx) return;
@@ -3082,7 +3078,6 @@
             });
         }
 
-        // ==================== FONT FUNCTIONS ====================
         function applyFonts() {
             const root = document.documentElement;
             const primaryFont = state.settings.selectedFontPrimary || 'Sarabun';
@@ -3136,7 +3131,6 @@
             `;
         }
 
-        // ==================== ADMIN UPLOAD CONTROL ====================
         function updateUploadPermissions() {
             const shopAvatar = document.getElementById('shopAvatar');
             const shopBanner = document.getElementById('shopBanner');
@@ -3220,7 +3214,6 @@
         document.getElementById('profileUrlInput')?.addEventListener('input', updateProfilePreview);
         document.getElementById('bannerUrlInput')?.addEventListener('input', updateBannerPreview);
 
-        // ==================== SOCIAL VISIBILITY ====================
         function updateSocialVisibility() {
             const visible = state.settings.socialVisible;
             const fbBtn = document.getElementById('fbBtn');
@@ -3252,7 +3245,6 @@
             addToActivityLog('ปรับแต่ง Social Media', JSON.stringify(state.settings.socialVisible));
         }
 
-        // ==================== CUSTOM THEME ====================
         function applyCustomTheme(theme) {
             const root = document.documentElement;
             root.style.setProperty('--accent', theme.accent);
@@ -3371,7 +3363,6 @@
             saveCustomTheme();
         }
 
-        // ==================== SETTINGS ====================
         function applySettings() {
             const s = state.settings;
             document.getElementById('shopNameDisplay').textContent = s.shopName || 'Creative Studio';
@@ -3443,7 +3434,6 @@
             syncSettings();
         }
 
-        // ==================== ADMIN AUTH ====================
         function openAdminLogin() { openModal('adminLoginModal'); document.getElementById('adminPasswordInput').value = ''; }
         async function doAdminLogin() {
             const pass = document.getElementById('adminPasswordInput').value;
@@ -3472,7 +3462,6 @@
             addToActivityLog('ออกจากระบบ', '');
         }
 
-        // ==================== QUEUE CRUD ====================
         function openAddModal() {
             state.editingId = null;
             state.urgency = 'normal';
@@ -3481,7 +3470,11 @@
             document.getElementById('f_price').value = '';
             document.getElementById('f_channel').value = 'LINE';
             document.getElementById('f_status').value = 'waiting';
-            document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            document.getElementById('f_date').value = `${yyyy}-${mm}-${dd}`;
             document.getElementById('f_deadline').value = '';
             selectUrgency('normal');
             openModal('queueModal');
@@ -3500,8 +3493,21 @@
             document.getElementById('f_contact').value = t.contact || '';
             document.getElementById('f_price').value = t.price || '';
             document.getElementById('f_status').value = t.status || 'waiting';
-            document.getElementById('f_date').value = t.date || '';
-            document.getElementById('f_deadline').value = t.deadline || '';
+
+            if (t.date) {
+                const dateObj = parseDateToYYYYMMDD(t.date);
+                document.getElementById('f_date').value = dateObj;
+            } else {
+                document.getElementById('f_date').value = '';
+            }
+
+            if (t.deadline) {
+                const deadlineObj = parseDateToYYYYMMDD(t.deadline);
+                document.getElementById('f_deadline').value = deadlineObj;
+            } else {
+                document.getElementById('f_deadline').value = '';
+            }
+
             document.getElementById('f_note').value = t.note || '';
             selectUrgency(state.urgency);
             openModal('queueModal');
@@ -3519,6 +3525,10 @@
             const customer = document.getElementById('f_customer').value.trim();
             const type = document.getElementById('f_type').value.trim();
             if (!customer || !type) { toast('กรุณากรอกชื่อลูกค้าและประเภทงาน', 'error'); return; }
+
+            let dateValue = document.getElementById('f_date').value;
+            let deadlineValue = document.getElementById('f_deadline').value;
+
             const task = {
                 id: state.editingId || 'q' + Date.now(),
                 orderId: orderId || `ORD-${Date.now().toString().slice(-6)}`,
@@ -3528,11 +3538,12 @@
                 price: parseFloat(document.getElementById('f_price').value) || 0,
                 status: document.getElementById('f_status').value,
                 urgent: state.urgency === 'urgent',
-                date: document.getElementById('f_date').value,
-                deadline: document.getElementById('f_deadline').value,
+                date: dateValue || '',
+                deadline: deadlineValue || '',
                 note: document.getElementById('f_note').value.trim(),
                 num: state.editingId ? state.tasks.find(t => t.id === state.editingId)?.num : state.tasks.length + 1
             };
+
             if (state.editingId) {
                 const idx = state.tasks.findIndex(t => t.id === state.editingId);
                 state.tasks[idx] = task;
@@ -3580,7 +3591,6 @@
             return ch === 'LINE' ? 'channel-line' : ch === 'Facebook' ? 'channel-fb' : ch === 'Instagram' ? 'channel-ig' : '';
         }
 
-        // ==================== RENDER ====================
         function renderQueues() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             let tasks = state.tasks.filter(t => {
@@ -3661,7 +3671,6 @@
             if (ringBarFill) ringBarFill.style.width = pct + '%';
         }
 
-        // ==================== FILTER & VIEW ====================
         function setFilter(f, el) {
             state.filter = f;
             document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
@@ -3683,7 +3692,6 @@
             document.getElementById('viewToggleBtn').innerHTML = state.view === 'list' ? '<i class="fas fa-table-list"></i>' : '<i class="fas fa-calendar-alt"></i>';
         }
 
-        // ==================== CALENDAR ====================
         function renderCalendar() {
             const y = state.calYear, m = state.calMonth;
             const months = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
@@ -3729,7 +3737,6 @@
         function prevMonth() { if (state.calMonth === 0) { state.calMonth = 11; state.calYear--; } else state.calMonth--; renderCalendar(); }
         function nextMonth() { if (state.calMonth === 11) { state.calMonth = 0; state.calYear++; } else state.calMonth++; renderCalendar(); }
 
-        // ==================== MODAL HELPERS ====================
         function openModal(id) {
             if (id === 'adminSettingsModal') {
                 if (!state.isAdmin) { toast('เฉพาะแอดมินเท่านั้นที่สามารถเข้าถึงการตั้งค่าได้ 🔒', 'error'); return; }
@@ -3758,7 +3765,6 @@
             el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
         });
 
-        // ==================== TOAST ====================
         function toast(msg, type = 'info') {
             const c = document.getElementById('toastContainer');
             const t = document.createElement('div');
@@ -3768,22 +3774,16 @@
             setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 2500);
         }
 
-        // ==================== UTILS ====================
         function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-        function formatDate(d) { if (!d) return ''; return new Date(d + 'T00:00:00').toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }); }
 
         document.getElementById('adminBtn').addEventListener('click', () => openModal('adminSettingsModal'));
         function toggleCheckbox(id) { const cb = document.getElementById(id); if (cb) { cb.checked = !cb.checked; toggleBannerVisibility(); } }
         document.getElementById('shopAvatar').addEventListener('click', (e) => { if (state.isAdmin) { e.stopPropagation(); openProfileUrlModal(); } });
 
-        // ==================== INIT ====================
         window.addEventListener('DOMContentLoaded', async () => {
-            // โหลด custom theme และ fonts จาก settings
             loadCustomTheme();
             applyFonts();
-            // โหลดข้อมูลจาก Google Sheets
             await loadAllData();
-            // อัปเดต UI
             applySettings();
             updateSocialVisibility();
             updateStats();
