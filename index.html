@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        /* ===== ธีมพื้นฐาน (Dark) - คงเดิมทั้งหมด ===== */
+        /* ===== ธีมพื้นฐาน (Dark) ===== */
         :root {
             --bg: #080808;
             --bg2: #0e0e0e;
@@ -40,7 +40,6 @@
             --instagram: #e4405f;
             --tiktok: #00f2ea;
             --line: #06c755;
-            --line-dark: #04a344;
             --font-primary: 'Sarabun', sans-serif;
             --font-display: 'Kanit', sans-serif;
         }
@@ -221,14 +220,48 @@
             color: var(--text);
         }
 
-        .btn-test {
-            background: rgba(57, 255, 20, 0.1);
-            border-color: var(--accent);
-            color: var(--accent);
+        /* SYNC STATUS */
+        .sync-status {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            color: var(--text2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
         }
 
-        .btn-test:hover {
-            background: rgba(57, 255, 20, 0.2);
+        .sync-status:hover {
+            transform: translateY(-1px);
+            border-color: var(--border2);
+        }
+
+        .sync-status.synced i {
+            color: var(--green);
+        }
+
+        .sync-status.syncing i {
+            color: var(--gold);
+            animation: spin 1s linear infinite;
+        }
+
+        .sync-status.error i {
+            color: var(--rose);
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* MARQUEE */
@@ -312,10 +345,6 @@
 
         .shop-banner.admin-upload-mode {
             cursor: pointer;
-        }
-
-        .banner-hidden {
-            display: none;
         }
 
         .main {
@@ -1360,52 +1389,6 @@
             text-align: center;
         }
 
-        .social-toggle-item .social-icon .fab.fa-facebook-f {
-            color: #1877f2;
-        }
-
-        .social-toggle-item .social-icon .fab.fa-instagram {
-            color: #e4405f;
-        }
-
-        .social-toggle-item .social-icon .fab.fa-tiktok {
-            color: #00f2ea;
-        }
-
-        .social-toggle-item .social-icon .fab.fa-line {
-            color: #06c755;
-        }
-
-        @keyframes checkboxPop {
-            0% {
-                transform: scale(0.8);
-                opacity: 0;
-            }
-
-            50% {
-                transform: scale(1.2);
-            }
-
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        .social-toggle-item input:checked+.custom-checkbox i {
-            animation: checkboxPop 0.2s ease;
-        }
-
-        @media(max-width:640px) {
-            .social-toggle-group {
-                grid-template-columns: 1fr;
-            }
-
-            .social-toggle-item {
-                padding: 12px 16px;
-            }
-        }
-
         .custom-checkbox-wrapper {
             display: flex;
             align-items: center;
@@ -1470,32 +1453,6 @@
             align-items: center;
             color: var(--text);
             margin: 0;
-        }
-
-        .admin-section .upload-zone {
-            cursor: pointer;
-        }
-
-        .admin-section .upload-zone.disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        .banner-upload-hint {
-            display: none;
-        }
-
-        .shop-banner.admin-upload-mode .banner-upload-hint {
-            display: block;
-        }
-
-        .shop-banner.admin-upload-mode {
-            cursor: pointer;
-        }
-
-        .shop-banner:not(.admin-upload-mode) {
-            cursor: default;
         }
 
         .toast-container {
@@ -1576,12 +1533,6 @@
             border: 2px solid var(--border);
             border-top-color: var(--text);
             animation: spin .7s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
         }
 
         .file-upload-zone {
@@ -1942,110 +1893,6 @@
             border-color: rgba(251, 113, 133, 0.2);
             margin-top: 12px;
         }
-
-        .sync-status {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 10px;
-            color: var(--text2);
-            z-index: 200;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            pointer-events: auto;
-            cursor: pointer;
-        }
-
-        .sync-status i {
-            font-size: 10px;
-        }
-
-        .sync-status.synced i {
-            color: var(--green);
-        }
-
-        .sync-status.syncing i {
-            color: var(--gold);
-            animation: spin 1s linear infinite;
-        }
-
-        .sync-status.error i {
-            color: var(--rose);
-        }
-
-        .sync-status:hover {
-            background: rgba(0, 0, 0, 0.9);
-        }
-
-        .notification-badge {
-            position: fixed;
-            top: 70px;
-            right: 20px;
-            background: var(--rose);
-            color: white;
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 12px;
-            font-weight: 600;
-            z-index: 200;
-            display: none;
-            align-items: center;
-            gap: 8px;
-            animation: slideIn 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .notification-badge.show {
-            display: flex;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        .connection-error {
-            position: fixed;
-            top: 60px;
-            left: 0;
-            right: 0;
-            background: rgba(251, 113, 133, 0.95);
-            color: white;
-            text-align: center;
-            padding: 8px;
-            font-size: 12px;
-            z-index: 150;
-            backdrop-filter: blur(8px);
-            display: none;
-        }
-
-        .connection-error.show {
-            display: block;
-        }
-
-        .retry-btn {
-            background: white;
-            color: var(--rose);
-            border: none;
-            border-radius: 4px;
-            padding: 2px 8px;
-            margin-left: 12px;
-            cursor: pointer;
-            font-size: 11px;
-            font-weight: bold;
-        }
     </style>
 </head>
 
@@ -2084,6 +1931,9 @@
                     แอดมิน</button>
                 <button class="btn btn-sm" onclick="logout()" id="logoutBtn" style="display:none"><i
                         class="fas fa-sign-out-alt"></i> ออก</button>
+                <div class="sync-status synced" id="syncStatus" onclick="forceSync()" title="คลิกเพื่อซิงค์ข้อมูล">
+                    <i class="fas fa-check-circle"></i> <span>ซิงค์แล้ว</span>
+                </div>
             </div>
         </div>
     </header>
@@ -2340,7 +2190,7 @@
         </div>
     </div>
 
-    <!-- Admin Settings (New UI) -->
+    <!-- Admin Settings -->
     <div class="modal-backdrop" id="adminSettingsModal">
         <div class="modal" style="max-width: 860px;">
             <div class="modal-header">
@@ -2350,7 +2200,6 @@
             </div>
             <div class="modal-body">
                 <div class="admin-settings-grid">
-                    <!-- Custom Theme Section -->
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <i class="fas fa-palette"></i>
@@ -2405,7 +2254,6 @@
                         </div>
                     </div>
 
-                    <!-- Font Selector Section -->
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <i class="fas fa-font"></i>
@@ -2420,7 +2268,6 @@
                         </div>
                     </div>
 
-                    <!-- Social Media Visibility Section -->
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <i class="fas fa-share-alt"></i>
@@ -2448,7 +2295,6 @@
                         </div>
                     </div>
 
-                    <!-- Shop Info -->
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <i class="fas fa-store"></i>
@@ -2462,7 +2308,6 @@
                         </div>
                     </div>
 
-                    <!-- Announcement & Notes -->
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <i class="fas fa-bullhorn"></i>
@@ -2476,7 +2321,6 @@
                         </div>
                     </div>
 
-                    <!-- Next Free Date -->
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <i class="fas fa-calendar-check"></i>
@@ -2488,7 +2332,6 @@
                         </div>
                     </div>
 
-                    <!-- Images -->
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <i class="fas fa-images"></i>
@@ -2519,7 +2362,6 @@
                         </div>
                     </div>
 
-                    <!-- Social URLs -->
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <i class="fas fa-link"></i>
@@ -2537,7 +2379,6 @@
                         </div>
                     </div>
 
-                    <!-- Admin Password -->
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <i class="fas fa-key"></i>
@@ -2550,7 +2391,6 @@
                         </div>
                     </div>
 
-                    <!-- Data Management -->
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <i class="fas fa-database"></i>
@@ -2575,7 +2415,6 @@
                         </div>
                     </div>
 
-                    <!-- Activity Log -->
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <i class="fas fa-history"></i>
@@ -2669,7 +2508,8 @@
 
     <script>
         // ==================== CONFIGURATION ====================
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2lTBIvi4uIl9lcvs0xx-fwaBTCVm6EIUBYuViy31Dq8HZ4r-sW45QnbmFrYPQtqtY/exec";
+        // อย่าลืมเปลี่ยน URL นี้เป็น URL ของ Google Apps Script ที่คุณ deploy
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxO5SbdLWZ0zlt8n1-WEuDfSTVOMQWSUIKYCs7QiXyeZyLZ0UonPDPPaYAf5IYCk-IN/exec";
 
         // ==================== STATE ====================
         let state = {
@@ -2715,6 +2555,9 @@
 
         let chartInstance = null;
         let isLoading = false;
+        let autoSyncInterval = null;
+        let syncRetryCount = 0;
+        const MAX_RETRY = 3;
 
         const availableFonts = [
             { name: 'Sarabun', category: 'sans-serif', preview: 'สวัสดี' },
@@ -2774,33 +2617,126 @@
             return date.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
         }
 
+        // ==================== LOCAL STORAGE ====================
+        function saveToLocalStorage() {
+            try {
+                const dataToSave = {
+                    tasks: state.tasks,
+                    settings: state.settings,
+                    activityLog: state.activityLog.slice(0, 100),
+                    lastUpdated: new Date().toISOString()
+                };
+                localStorage.setItem('queueflow_data', JSON.stringify(dataToSave));
+            } catch (e) {
+                console.error('Failed to save to localStorage:', e);
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const savedData = localStorage.getItem('queueflow_data');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    if (data.tasks && data.tasks.length > 0) state.tasks = data.tasks;
+                    if (data.settings) state.settings = { ...state.settings, ...data.settings };
+                    if (data.activityLog) state.activityLog = data.activityLog;
+                    console.log('Loaded data from localStorage, last updated:', data.lastUpdated);
+                    return true;
+                }
+            } catch (e) {
+                console.error('Failed to load from localStorage:', e);
+            }
+            return false;
+        }
+
+        // ==================== SAMPLE DATA ====================
+        function getSampleData() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const nextWeek = new Date(today);
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            const lastWeek = new Date(today);
+            lastWeek.setDate(lastWeek.getDate() - 5);
+
+            return [
+                { id: 'q1', orderId: 'ORD-001', customer: 'คุณนภา', type: 'Logo Design', channel: 'LINE', contact: '@napa_art', price: 1500, status: 'inprogress', urgent: false, date: today.toISOString().split('T')[0], deadline: nextWeek.toISOString().split('T')[0], note: 'ต้องการโลโก้มินิมอล 2 version', num: 1 },
+                { id: 'q2', orderId: 'INV-2024-002', customer: 'คุณสมชาย', type: 'Banner Facebook', channel: 'Facebook', contact: 'fb.com/somchai', price: 800, status: 'review', urgent: true, date: today.toISOString().split('T')[0], deadline: tomorrow.toISOString().split('T')[0], note: '', num: 2 },
+                { id: 'q3', orderId: 'ORD-003', customer: 'ร้านกาแฟบ้านสวน', type: 'Menu Design', channel: 'LINE', contact: '@baansuan_coffee', price: 3500, status: 'notstart', urgent: false, date: tomorrow.toISOString().split('T')[0], deadline: nextWeek.toISOString().split('T')[0], note: 'เมนู 2 หน้า', num: 3 },
+                { id: 'q4', orderId: 'CARD-004', customer: 'คุณปิยะ', type: 'Business Card', channel: 'Instagram', contact: '@piya.design', price: 600, status: 'done', urgent: false, date: lastWeek.toISOString().split('T')[0], deadline: today.toISOString().split('T')[0], note: '', num: 4 },
+                { id: 'q5', orderId: 'XYZ-005', customer: 'บริษัท XYZ', type: 'Infographic', channel: 'LINE', contact: '@xyz_corp', price: 2800, status: 'fixing', urgent: true, date: today.toISOString().split('T')[0], deadline: tomorrow.toISOString().split('T')[0], note: 'แก้ตัวเลขสถิติหน้า 2', num: 5 }
+            ];
+        }
+
+        // ==================== UPDATE SYNC STATUS ====================
+        function updateSyncStatus(status, message) {
+            const syncStatus = document.getElementById('syncStatus');
+            if (syncStatus) {
+                syncStatus.className = `sync-status ${status}`;
+                syncStatus.innerHTML = `<i class="fas fa-${status === 'synced' ? 'check-circle' : status === 'syncing' ? 'sync-alt' : 'exclamation-triangle'}"></i> <span>${message}</span>`;
+            }
+        }
+
         // ==================== GOOGLE SHEETS API ====================
-        async function callGoogleAppsScript(action, data = {}) {
-            if (isLoading) return null;
-            isLoading = true;
-            document.getElementById('loadingOverlay').classList.remove('hidden');
+        async function callGoogleAppsScript(action, data = {}, retryCount = 0) {
+            if (isLoading && action !== 'ping') return null;
+            if (action !== 'ping') {
+                isLoading = true;
+                document.getElementById('loadingOverlay').classList.remove('hidden');
+            }
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
 
             try {
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ action: action, ...data })
+                    body: new URLSearchParams({ action: action, ...data }),
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const result = await response.json();
-                return result;
+
+                if (result && result.success) {
+                    syncRetryCount = 0;
+                    if (action !== 'ping') updateSyncStatus('synced', 'ซิงค์สำเร็จ');
+                    return result;
+                } else {
+                    throw new Error(result?.error || 'Unknown error');
+                }
             } catch (error) {
+                clearTimeout(timeoutId);
                 console.error('API Error:', error);
-                toast('เกิดข้อผิดพลาดในการเชื่อมต่อกับ Google Sheets', 'error');
+
+                if (retryCount < MAX_RETRY && action !== 'ping') {
+                    updateSyncStatus('syncing', `กำลังลองใหม่ (${retryCount + 1}/${MAX_RETRY})...`);
+                    await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+                    return callGoogleAppsScript(action, data, retryCount + 1);
+                }
+
+                if (action !== 'ping') {
+                    updateSyncStatus('error', 'ออฟไลน์ - ใช้ข้อมูลในเครื่อง');
+                    toast('ไม่สามารถเชื่อมต่อ Google Sheets ได้ กำลังใช้ข้อมูลในเครื่อง', 'error');
+                }
                 return null;
             } finally {
-                isLoading = false;
-                document.getElementById('loadingOverlay').classList.add('hidden');
+                if (action !== 'ping') {
+                    isLoading = false;
+                    setTimeout(() => {
+                        document.getElementById('loadingOverlay').classList.add('hidden');
+                    }, 300);
+                }
             }
         }
 
         async function loadAllData() {
+            // Load from localStorage first as fallback
+            const hasLocalData = loadFromLocalStorage();
+
             const result = await callGoogleAppsScript('getAllData');
             if (result && result.success) {
                 if (result.tasks && Array.isArray(result.tasks)) {
@@ -2815,6 +2751,8 @@
                 if (result.activityLog && Array.isArray(result.activityLog)) {
                     state.activityLog = result.activityLog;
                 }
+
+                saveToLocalStorage();
                 applySettings();
                 updateSocialVisibility();
                 applyCustomTheme(state.settings.customTheme);
@@ -2824,19 +2762,21 @@
                 renderCalendar();
                 updateChart();
                 updateActivityLogUI();
+
                 toast('โหลดข้อมูลจาก Google Sheets สำเร็จ', 'success');
                 return true;
             } else {
-                if (state.tasks.length === 0) {
-                    state.tasks = [
-                        { id: 'q1', orderId: 'ORD-001', customer: 'คุณนภา', type: 'Logo Design', channel: 'LINE', contact: '@napa_art', price: 1500, status: 'inprogress', urgent: false, date: new Date().toISOString().split('T')[0], deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], note: 'ต้องการโลโก้มินิมอล 2 version', num: 1 },
-                        { id: 'q2', orderId: 'INV-2024-002', customer: 'คุณสมชาย', type: 'Banner Facebook', channel: 'Facebook', contact: 'fb.com/somchai', price: 800, status: 'review', urgent: true, date: new Date().toISOString().split('T')[0], deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], note: '', num: 2 },
-                        { id: 'q3', orderId: 'ORD-003', customer: 'ร้านกาแฟบ้านสวน', type: 'Menu Design', channel: 'LINE', contact: '@baansuan_coffee', price: 3500, status: 'notstart', urgent: false, date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], deadline: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], note: 'เมนู 2 หน้า', num: 3 },
-                        { id: 'q4', orderId: 'CARD-004', customer: 'คุณปิยะ', type: 'Business Card', channel: 'Instagram', contact: '@piya.design', price: 600, status: 'done', urgent: false, date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], note: '', num: 4 },
-                        { id: 'q5', orderId: 'XYZ-005', customer: 'บริษัท XYZ', type: 'Infographic', channel: 'LINE', contact: '@xyz_corp', price: 2800, status: 'fixing', urgent: true, date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], deadline: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], note: 'แก้ตัวเลขสถิติหน้า 2', num: 5 },
-                    ];
+                // If no internet connection, use localStorage data
+                if (state.tasks.length === 0 && !hasLocalData) {
+                    state.tasks = getSampleData();
+                    saveToLocalStorage();
                 }
-                await syncAllData();
+                applySettings();
+                updateStats();
+                renderQueues();
+                renderCalendar();
+                updateChart();
+                toast('กำลังใช้ข้อมูลในเครื่อง (ออฟไลน์)', 'info');
                 return true;
             }
         }
@@ -2847,11 +2787,16 @@
                 settings: JSON.stringify(state.settings),
                 activityLog: JSON.stringify(state.activityLog)
             });
+
+            saveToLocalStorage();
+
             if (result && result.success) {
+                updateSyncStatus('synced', 'ซิงค์สำเร็จ');
                 toast('บันทึกข้อมูลไปยัง Google Sheets สำเร็จ', 'success');
                 return true;
             } else {
-                toast('ไม่สามารถบันทึกข้อมูลไปยัง Google Sheets ได้', 'error');
+                updateSyncStatus('error', 'ซิงค์ไม่สำเร็จ - ข้อมูลถูกบันทึกในเครื่องแล้ว');
+                toast('ไม่สามารถบันทึกไปยัง Google Sheets ได้ แต่ข้อมูลถูกบันทึกในเครื่องแล้ว', 'warning');
                 return false;
             }
         }
@@ -2860,6 +2805,9 @@
             const result = await callGoogleAppsScript('syncTasks', {
                 tasks: JSON.stringify(state.tasks)
             });
+            if (result && result.success) {
+                saveToLocalStorage();
+            }
             return result && result.success;
         }
 
@@ -2867,6 +2815,9 @@
             const result = await callGoogleAppsScript('syncSettings', {
                 settings: JSON.stringify(state.settings)
             });
+            if (result && result.success) {
+                saveToLocalStorage();
+            }
             return result && result.success;
         }
 
@@ -2877,6 +2828,48 @@
             return result && result.success;
         }
 
+        async function forceSync() {
+            updateSyncStatus('syncing', 'กำลังซิงค์ข้อมูล...');
+            const result = await callGoogleAppsScript('getAllData');
+            if (result && result.success) {
+                state.tasks = result.tasks;
+                state.settings = { ...state.settings, ...result.settings };
+                state.activityLog = result.activityLog;
+                saveToLocalStorage();
+                applySettings();
+                updateSocialVisibility();
+                applyCustomTheme(state.settings.customTheme);
+                applyFonts();
+                updateStats();
+                renderQueues();
+                renderCalendar();
+                updateChart();
+                updateActivityLogUI();
+                updateSyncStatus('synced', 'ซิงค์สำเร็จ');
+                toast('ซิงค์ข้อมูลสำเร็จ', 'success');
+            } else {
+                updateSyncStatus('error', 'ซิงค์ไม่สำเร็จ');
+                toast('ไม่สามารถซิงค์ข้อมูลได้ กรุณาลองใหม่', 'error');
+            }
+        }
+
+        function startAutoSync() {
+            if (autoSyncInterval) clearInterval(autoSyncInterval);
+            autoSyncInterval = setInterval(() => {
+                if (state.isAdmin || state.tasks.length > 0) {
+                    syncAllData();
+                }
+            }, 30000);
+        }
+
+        function stopAutoSync() {
+            if (autoSyncInterval) {
+                clearInterval(autoSyncInterval);
+                autoSyncInterval = null;
+            }
+        }
+
+        // ==================== ACTIVITY LOG ====================
         function addToActivityLog(action, details) {
             const logEntry = {
                 timestamp: new Date().toISOString(),
@@ -2889,6 +2882,7 @@
             if (state.activityLog.length > 100) state.activityLog = state.activityLog.slice(0, 100);
             updateActivityLogUI();
             syncActivityLog();
+            saveToLocalStorage();
         }
 
         function updateActivityLogUI() {
@@ -2912,11 +2906,13 @@
                 state.activityLog = [];
                 updateActivityLogUI();
                 syncActivityLog();
+                saveToLocalStorage();
                 toast('ล้างประวัติการเปลี่ยนแปลงเรียบร้อยแล้ว', 'success');
                 addToActivityLog('ล้างประวัติ', '');
             }
         }
 
+        // ==================== EXPORT/IMPORT ====================
         function exportToCSV() {
             if (state.tasks.length === 0) {
                 toast('ไม่มีข้อมูลที่จะส่งออก', 'error');
@@ -3000,8 +2996,10 @@
                     for (let j = 0; j < row.length; j++) {
                         const char = row[j];
                         if (char === '"') inQuotes = !inQuotes;
-                        else if (char === ',' && !inQuotes) { values.push(currentValue); currentValue = ''; }
-                        else currentValue += char;
+                        else if (char === ',' && !inQuotes) {
+                            values.push(currentValue);
+                            currentValue = '';
+                        } else currentValue += char;
                     }
                     values.push(currentValue);
                     const task = {};
@@ -3022,6 +3020,7 @@
                 if (newTasks.length > 0) {
                     state.tasks = [...state.tasks, ...newTasks];
                     await syncTasks();
+                    saveToLocalStorage();
                     updateStats();
                     renderQueues();
                     renderCalendar();
@@ -3038,6 +3037,7 @@
             event.target.value = '';
         }
 
+        // ==================== CHART ====================
         function updateChart() {
             const ctx = document.getElementById('statsChart')?.getContext('2d');
             if (!ctx) return;
@@ -3078,6 +3078,7 @@
             });
         }
 
+        // ==================== FONTS ====================
         function applyFonts() {
             const root = document.documentElement;
             const primaryFont = state.settings.selectedFontPrimary || 'Sarabun';
@@ -3131,120 +3132,7 @@
             `;
         }
 
-        function updateUploadPermissions() {
-            const shopAvatar = document.getElementById('shopAvatar');
-            const shopBanner = document.getElementById('shopBanner');
-            if (state.isAdmin) {
-                shopAvatar.classList.add('admin-only');
-                shopAvatar.classList.remove('non-admin');
-                shopBanner.classList.add('admin-upload-mode');
-            } else {
-                shopAvatar.classList.remove('admin-only');
-                shopAvatar.classList.add('non-admin');
-                shopBanner.classList.remove('admin-upload-mode');
-            }
-        }
-
-        function openProfileUrlModal() {
-            if (!state.isAdmin) { toast('เฉพาะแอดมินเท่านั้นที่สามารถเปลี่ยนรูปโปรไฟล์ได้ 🔒', 'error'); return; }
-            document.getElementById('profileUrlInput').value = state.settings.profileImg || '';
-            updateProfilePreview();
-            openModal('profileUrlModal');
-        }
-
-        function openBannerUrlModal() {
-            if (!state.isAdmin) { toast('เฉพาะแอดมินเท่านั้นที่สามารถเปลี่ยนแบนเนอร์ได้ 🔒', 'error'); return; }
-            document.getElementById('bannerUrlInput').value = state.settings.bannerImg || '';
-            updateBannerPreview();
-            openModal('bannerUrlModal');
-        }
-
-        function updateProfilePreview() {
-            const url = document.getElementById('profileUrlInput').value;
-            const preview = document.getElementById('profilePreview');
-            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                preview.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.parentElement.innerHTML='<span style=\'color:var(--text3);font-size:12px;\'>รูปไม่สามารถโหลดได้</span>'">`;
-            } else {
-                preview.innerHTML = '<span style="color: var(--text3); font-size: 12px;">รอ URL</span>';
-            }
-        }
-
-        function updateBannerPreview() {
-            const url = document.getElementById('bannerUrlInput').value;
-            const preview = document.getElementById('bannerPreview');
-            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                preview.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.parentElement.innerHTML='<span style=\'color:var(--text3);font-size:12px;\'>รูปไม่สามารถโหลดได้</span>'">`;
-            } else {
-                preview.innerHTML = '<span style="color: var(--text3); font-size: 12px;">รอ URL</span>';
-            }
-        }
-
-        async function saveProfileFromUrl() {
-            const url = document.getElementById('profileUrlInput').value.trim();
-            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                state.settings.profileImg = url;
-                document.getElementById('shopAvatarImg').src = url;
-                document.getElementById('shopAvatarImg').style.display = '';
-                document.getElementById('shopAvatarFallback').style.display = 'none';
-                await syncSettings();
-                closeModal('profileUrlModal');
-                toast('อัปเดตรูปโปรไฟล์สำเร็จ ✅', 'success');
-                addToActivityLog('อัปเดตรูปโปรไฟล์', url);
-            } else {
-                toast('กรุณาใส่ URL ที่ถูกต้อง (เริ่มต้นด้วย http:// หรือ https://)', 'error');
-            }
-        }
-
-        async function saveBannerFromUrl() {
-            const url = document.getElementById('bannerUrlInput').value.trim();
-            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                state.settings.bannerImg = url;
-                document.getElementById('bannerImg').src = url;
-                document.getElementById('bannerImg').style.display = '';
-                document.getElementById('shopBanner').style.display = '';
-                await syncSettings();
-                closeModal('bannerUrlModal');
-                toast('อัปเดตรูปแบนเนอร์สำเร็จ ✅', 'success');
-                addToActivityLog('อัปเดตรูปแบนเนอร์', url);
-            } else {
-                toast('กรุณาใส่ URL ที่ถูกต้อง (เริ่มต้นด้วย http:// หรือ https://)', 'error');
-            }
-        }
-
-        document.getElementById('profileUrlInput')?.addEventListener('input', updateProfilePreview);
-        document.getElementById('bannerUrlInput')?.addEventListener('input', updateBannerPreview);
-
-        function updateSocialVisibility() {
-            const visible = state.settings.socialVisible;
-            const fbBtn = document.getElementById('fbBtn');
-            const igBtn = document.getElementById('igBtn');
-            const ttBtn = document.getElementById('ttBtn');
-            const lnBtn = document.getElementById('lnBtn');
-            if (fbBtn) fbBtn.classList.toggle('hidden-social', !visible.fb);
-            if (igBtn) igBtn.classList.toggle('hidden-social', !visible.ig);
-            if (ttBtn) ttBtn.classList.toggle('hidden-social', !visible.tt);
-            if (lnBtn) lnBtn.classList.toggle('hidden-social', !visible.ln);
-        }
-
-        function loadSocialToggleState() {
-            document.getElementById('toggle_fb').checked = state.settings.socialVisible.fb;
-            document.getElementById('toggle_ig').checked = state.settings.socialVisible.ig;
-            document.getElementById('toggle_tt').checked = state.settings.socialVisible.tt;
-            document.getElementById('toggle_ln').checked = state.settings.socialVisible.ln;
-        }
-
-        async function saveSocialVisibility() {
-            state.settings.socialVisible = {
-                fb: document.getElementById('toggle_fb').checked,
-                ig: document.getElementById('toggle_ig').checked,
-                tt: document.getElementById('toggle_tt').checked,
-                ln: document.getElementById('toggle_ln').checked
-            };
-            updateSocialVisibility();
-            await syncSettings();
-            addToActivityLog('ปรับแต่ง Social Media', JSON.stringify(state.settings.socialVisible));
-        }
-
+        // ==================== THEME ====================
         function applyCustomTheme(theme) {
             const root = document.documentElement;
             root.style.setProperty('--accent', theme.accent);
@@ -3363,6 +3251,7 @@
             saveCustomTheme();
         }
 
+        // ==================== SETTINGS ====================
         function applySettings() {
             const s = state.settings;
             document.getElementById('shopNameDisplay').textContent = s.shopName || 'Creative Studio';
@@ -3399,10 +3288,12 @@
             s.igUrl = document.getElementById('s_igUrl').value || '#';
             s.ttUrl = document.getElementById('s_ttUrl').value || '#';
             s.lnUrl = document.getElementById('s_lnUrl').value || '#';
-            const np = document.getElementById('s_adminPass').value; if (np) s.adminPass = np;
+            const np = document.getElementById('s_adminPass').value;
+            if (np) s.adminPass = np;
             await saveCustomTheme();
             await saveSocialVisibility();
             await syncSettings();
+            saveToLocalStorage();
             applySettings();
             closeModal('adminSettingsModal');
             toast('บันทึกการตั้งค่าสำเร็จ ✅', 'success');
@@ -3432,9 +3323,128 @@
             state.settings.showBanner = document.getElementById('s_showBanner').checked;
             document.getElementById('shopBanner').style.display = state.settings.showBanner ? '' : 'none';
             syncSettings();
+            saveToLocalStorage();
         }
 
+        // ==================== SOCIAL ====================
+        function updateSocialVisibility() {
+            const visible = state.settings.socialVisible;
+            const fbBtn = document.getElementById('fbBtn');
+            const igBtn = document.getElementById('igBtn');
+            const ttBtn = document.getElementById('ttBtn');
+            const lnBtn = document.getElementById('lnBtn');
+            if (fbBtn) fbBtn.classList.toggle('hidden-social', !visible.fb);
+            if (igBtn) igBtn.classList.toggle('hidden-social', !visible.ig);
+            if (ttBtn) ttBtn.classList.toggle('hidden-social', !visible.tt);
+            if (lnBtn) lnBtn.classList.toggle('hidden-social', !visible.ln);
+        }
+
+        function loadSocialToggleState() {
+            document.getElementById('toggle_fb').checked = state.settings.socialVisible.fb;
+            document.getElementById('toggle_ig').checked = state.settings.socialVisible.ig;
+            document.getElementById('toggle_tt').checked = state.settings.socialVisible.tt;
+            document.getElementById('toggle_ln').checked = state.settings.socialVisible.ln;
+        }
+
+        async function saveSocialVisibility() {
+            state.settings.socialVisible = {
+                fb: document.getElementById('toggle_fb').checked,
+                ig: document.getElementById('toggle_ig').checked,
+                tt: document.getElementById('toggle_tt').checked,
+                ln: document.getElementById('toggle_ln').checked
+            };
+            updateSocialVisibility();
+            await syncSettings();
+            saveToLocalStorage();
+            addToActivityLog('ปรับแต่ง Social Media', JSON.stringify(state.settings.socialVisible));
+        }
+
+        // ==================== IMAGE UPLOAD ====================
+        function updateUploadPermissions() {
+            const shopAvatar = document.getElementById('shopAvatar');
+            const shopBanner = document.getElementById('shopBanner');
+            if (state.isAdmin) {
+                shopAvatar.classList.add('admin-only');
+                shopAvatar.classList.remove('non-admin');
+                shopBanner.classList.add('admin-upload-mode');
+            } else {
+                shopAvatar.classList.remove('admin-only');
+                shopAvatar.classList.add('non-admin');
+                shopBanner.classList.remove('admin-upload-mode');
+            }
+        }
+
+        function openProfileUrlModal() {
+            if (!state.isAdmin) { toast('เฉพาะแอดมินเท่านั้นที่สามารถเปลี่ยนรูปโปรไฟล์ได้ 🔒', 'error'); return; }
+            document.getElementById('profileUrlInput').value = state.settings.profileImg || '';
+            updateProfilePreview();
+            openModal('profileUrlModal');
+        }
+
+        function openBannerUrlModal() {
+            if (!state.isAdmin) { toast('เฉพาะแอดมินเท่านั้นที่สามารถเปลี่ยนแบนเนอร์ได้ 🔒', 'error'); return; }
+            document.getElementById('bannerUrlInput').value = state.settings.bannerImg || '';
+            updateBannerPreview();
+            openModal('bannerUrlModal');
+        }
+
+        function updateProfilePreview() {
+            const url = document.getElementById('profileUrlInput').value;
+            const preview = document.getElementById('profilePreview');
+            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                preview.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.parentElement.innerHTML='<span style=\'color:var(--text3);font-size:12px;\'>รูปไม่สามารถโหลดได้</span>'">`;
+            } else {
+                preview.innerHTML = '<span style="color: var(--text3); font-size: 12px;">รอ URL</span>';
+            }
+        }
+
+        function updateBannerPreview() {
+            const url = document.getElementById('bannerUrlInput').value;
+            const preview = document.getElementById('bannerPreview');
+            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                preview.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.parentElement.innerHTML='<span style=\'color:var(--text3);font-size:12px;\'>รูปไม่สามารถโหลดได้</span>'">`;
+            } else {
+                preview.innerHTML = '<span style="color: var(--text3); font-size: 12px;">รอ URL</span>';
+            }
+        }
+
+        async function saveProfileFromUrl() {
+            const url = document.getElementById('profileUrlInput').value.trim();
+            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                state.settings.profileImg = url;
+                document.getElementById('shopAvatarImg').src = url;
+                document.getElementById('shopAvatarImg').style.display = '';
+                document.getElementById('shopAvatarFallback').style.display = 'none';
+                await syncSettings();
+                saveToLocalStorage();
+                closeModal('profileUrlModal');
+                toast('อัปเดตรูปโปรไฟล์สำเร็จ ✅', 'success');
+                addToActivityLog('อัปเดตรูปโปรไฟล์', url);
+            } else {
+                toast('กรุณาใส่ URL ที่ถูกต้อง (เริ่มต้นด้วย http:// หรือ https://)', 'error');
+            }
+        }
+
+        async function saveBannerFromUrl() {
+            const url = document.getElementById('bannerUrlInput').value.trim();
+            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                state.settings.bannerImg = url;
+                document.getElementById('bannerImg').src = url;
+                document.getElementById('bannerImg').style.display = '';
+                document.getElementById('shopBanner').style.display = '';
+                await syncSettings();
+                saveToLocalStorage();
+                closeModal('bannerUrlModal');
+                toast('อัปเดตรูปแบนเนอร์สำเร็จ ✅', 'success');
+                addToActivityLog('อัปเดตรูปแบนเนอร์', url);
+            } else {
+                toast('กรุณาใส่ URL ที่ถูกต้อง (เริ่มต้นด้วย http:// หรือ https://)', 'error');
+            }
+        }
+
+        // ==================== ADMIN ====================
         function openAdminLogin() { openModal('adminLoginModal'); document.getElementById('adminPasswordInput').value = ''; }
+
         async function doAdminLogin() {
             const pass = document.getElementById('adminPasswordInput').value;
             if (pass === state.settings.adminPass) {
@@ -3450,6 +3460,7 @@
                 addToActivityLog('เข้าสู่ระบบ', 'Admin');
             } else { toast('รหัสผ่านไม่ถูกต้อง ❌', 'error'); }
         }
+
         function logout() {
             state.isAdmin = false;
             document.getElementById('addQueueBtn').style.display = 'none';
@@ -3462,6 +3473,7 @@
             addToActivityLog('ออกจากระบบ', '');
         }
 
+        // ==================== QUEUE CRUD ====================
         function openAddModal() {
             state.editingId = null;
             state.urgency = 'normal';
@@ -3553,6 +3565,7 @@
                 addToActivityLog('เพิ่มคิวงาน', `${task.customer} - ${task.type}`);
             }
             await syncTasks();
+            saveToLocalStorage();
             closeModal('queueModal');
             updateStats();
             renderQueues();
@@ -3567,6 +3580,7 @@
             const deletedTask = state.tasks.find(t => t.id === state.deletingId);
             state.tasks = state.tasks.filter(t => t.id !== state.deletingId);
             await syncTasks();
+            saveToLocalStorage();
             closeModal('confirmModal');
             updateStats();
             renderQueues();
@@ -3582,6 +3596,7 @@
             const oldStatus = t.status;
             t.status = newStatus;
             await syncTasks();
+            saveToLocalStorage();
             updateStats();
             renderQueues();
             addToActivityLog('เปลี่ยนสถานะ', `${t.customer}: ${oldStatus} -> ${newStatus}`);
@@ -3737,6 +3752,7 @@
         function prevMonth() { if (state.calMonth === 0) { state.calMonth = 11; state.calYear--; } else state.calMonth--; renderCalendar(); }
         function nextMonth() { if (state.calMonth === 11) { state.calMonth = 0; state.calYear++; } else state.calMonth++; renderCalendar(); }
 
+        // ==================== MODAL ====================
         function openModal(id) {
             if (id === 'adminSettingsModal') {
                 if (!state.isAdmin) { toast('เฉพาะแอดมินเท่านั้นที่สามารถเข้าถึงการตั้งค่าได้ 🔒', 'error'); return; }
@@ -3776,10 +3792,24 @@
 
         function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
+        // ==================== EVENT LISTENERS ====================
         document.getElementById('adminBtn').addEventListener('click', () => openModal('adminSettingsModal'));
-        function toggleCheckbox(id) { const cb = document.getElementById(id); if (cb) { cb.checked = !cb.checked; toggleBannerVisibility(); } }
         document.getElementById('shopAvatar').addEventListener('click', (e) => { if (state.isAdmin) { e.stopPropagation(); openProfileUrlModal(); } });
+        document.getElementById('profileUrlInput')?.addEventListener('input', updateProfilePreview);
+        document.getElementById('bannerUrlInput')?.addEventListener('input', updateBannerPreview);
 
+        // Online/Offline handlers
+        window.addEventListener('online', () => {
+            toast('เชื่อมต่ออินเทอร์เน็ตแล้ว กำลังซิงค์ข้อมูล...', 'success');
+            forceSync();
+        });
+
+        window.addEventListener('offline', () => {
+            toast(' disconnected กำลังทำงานแบบออฟไลน์', 'warning');
+            updateSyncStatus('error', 'ออฟไลน์');
+        });
+
+        // ==================== INIT ====================
         window.addEventListener('DOMContentLoaded', async () => {
             loadCustomTheme();
             applyFonts();
@@ -3792,7 +3822,11 @@
             updateChart();
             updateUploadPermissions();
             renderFontSelector();
-            setTimeout(() => document.getElementById('loadingOverlay').classList.add('hidden'), 700);
+            startAutoSync();
+
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }, 700);
         });
 
         function loadCustomTheme() {
