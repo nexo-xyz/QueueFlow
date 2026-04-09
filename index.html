@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QueueFlow — ระบบจัดการคิว</title>
+    <title>QueueFlow — ระบบจัดการคิว (Google Sheets Sync)</title>
     <!-- เพิ่ม Google Fonts ทั้งหมดที่รองรับภาษาไทย -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1958,7 +1958,6 @@
             margin-top: 12px;
         }
 
-        /* Google Sheets Sync Status */
         .sync-status {
             position: fixed;
             bottom: 20px;
@@ -2072,29 +2071,22 @@
     <!-- LOADING -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
-        <span style="color:var(--text3);font-size:12px;letter-spacing:1px">LOADING</span>
+        <span style="color:var(--text3);font-size:12px;letter-spacing:1px">กำลังโหลดข้อมูล...</span>
     </div>
 
     <!-- TOAST -->
     <div class="toast-container" id="toastContainer"></div>
 
     <!-- SYNC STATUS -->
-    <div class="sync-status" id="syncStatus" onclick="manualSync()">
-        <i class="fas fa-cloud"></i>
-        <span id="syncStatusText">กำลังเชื่อมต่อ...</span>
+    <div class="sync-status" id="syncStatus" onclick="syncNow()">
+        <i class="fas fa-cloud-sync-alt"></i>
+        <span id="syncStatusText">พร้อมใช้งาน</span>
     </div>
 
-    <!-- NOTIFICATION BADGE -->
-    <div class="notification-badge" id="notificationBadge">
-        <i class="fas fa-sync-alt"></i>
-        <span id="notificationText">มีข้อมูลอัปเดต</span>
-    </div>
-
-    <!-- CONNECTION ERROR BANNER -->
+    <!-- CONNECTION ERROR -->
     <div class="connection-error" id="connectionError">
-        <i class="fas fa-exclamation-triangle"></i>
-        ไม่สามารถเชื่อมต่อกับ Google Sheets ได้ กำลังพยายามเชื่อมต่อใหม่...
-        <button class="retry-btn" onclick="manualSync()">ลองใหม่</button>
+        <i class="fas fa-exclamation-triangle"></i> ไม่สามารถเชื่อมต่อกับ Google Sheets ได้
+        <button class="retry-btn" onclick="syncNow()">ลองอีกครั้ง</button>
     </div>
 
     <!-- HEADER -->
@@ -2102,7 +2094,7 @@
         <div class="header-inner">
             <div class="shop-avatar" id="shopAvatar">
                 <img id="shopAvatarImg" src="" alt=""
-                    onerror="this.style.display='none';var fb=document.getElementById('shopAvatarFallback');if(fb)fb.style.display='flex'">
+                    onerror="this.style.display='none';this.nextSibling.style.display='flex'">
                 <span id="shopAvatarFallback"><i class="fas fa-store"></i></span>
             </div>
             <input type="file" id="profileInput" accept="image/*" style="display:none"
@@ -2269,7 +2261,7 @@
 
     </main>
 
-    <!-- MODALS -->
+    <!-- MODALS (คงเดิมทั้งหมด) -->
 
     <!-- Admin Login -->
     <div class="modal-backdrop" id="adminLoginModal">
@@ -2536,17 +2528,6 @@
                                     id="s_shopName" value="Creative Studio"></div>
                             <div class="form-group"><label class="form-label">คำอธิบายร้าน</label><input
                                     class="form-input" id="s_tagline" value="จัดการคิวงานออกแบบ"></div>
-                            <div class="form-group"><label class="form-label">API Endpoint (Google Apps
-                                    Script)</label><input class="form-input" id="s_apiUrl"
-                                    placeholder="https://script.google.com/macros/s/…/exec"
-                                    value="https://script.google.com/macros/s/AKfycbww8AEuq9HZqOoGvAUmpKVO0zO48rmilA8UIEi6Kpg7VDW-xQ_CS9zjycPwkRuuBfaf/exec">
-                            </div>
-                            <div class="form-group">
-                                <button class="btn btn-sm btn-test" onclick="testGoogleSheetsConnection()"
-                                    style="width: 100%; margin-top: 8px;">
-                                    <i class="fas fa-plug"></i> ทดสอบการเชื่อมต่อ Google Sheets
-                                </button>
-                            </div>
                         </div>
                     </div>
 
@@ -2771,22 +2752,42 @@
     </div>
 
     <script>
-        // ─── GOOGLE SHEETS API URL ─────────────────────────────────────────
-        const GOOGLE_SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbzEqLurkU1-50SDKF34YULfNiGPP6AkiB67EHqU-qat4yy53giOMQp70Lt4qZsC1iRz/exec';
+        // ========== GOOGLE SHEETS CONFIGURATION ==========
+        // IMPORTANT: คุณต้องปรับแต่ง URL นี้ให้ตรงกับ Google Apps Script ที่ deploy ไว้
+        // ขั้นตอนการตั้งค่า:
+        // 1. สร้าง Google Sheets ใหม่
+        // 2. เปิด Tools > Script Editor
+        // 3. วางโค้ด Google Apps Script (ดูในคำอธิบาย)
+        // 4. Deploy > New deployment > Web app > Execute as "Me" > Who has access "Anyone"
+        // 5. คัดลอก URL และวางด้านล่าง
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDUaM8DsB3-BBoqKcKrx_UrK0tN4tzMOkuFmXV8iSQLjLji5geRl9we6GtWguFFrh9/exec';
 
-        // ─── STATE ────────────────────────────────────────────────────────
+        // ใช้ localStorage สำหรับเก็บ cache และ settings เท่านั้น (ไม่เก็บ tasks)
         let state = {
-            tasks: [], isAdmin: false, filter: 'all', view: 'list',
-            editingId: null, deletingId: null, urgency: 'normal',
-            calYear: new Date().getFullYear(), calMonth: new Date().getMonth(),
+            tasks: [],           // ดึงจาก Google Sheets เสมอ
+            isAdmin: false,
+            filter: 'all',
+            view: 'list',
+            editingId: null,
+            deletingId: null,
+            urgency: 'normal',
+            calYear: new Date().getFullYear(),
+            calMonth: new Date().getMonth(),
             selectedCalDate: null,
             settings: {
-                shopName: 'Creative Studio', tagline: 'จัดการคิวงานออกแบบ',
+                shopName: 'Creative Studio',
+                tagline: 'จัดการคิวงานออกแบบ',
                 announcement: '📢 ยินดีต้อนรับสู่ระบบจัดการคิว — ติดตามสถานะงานของคุณได้ที่นี่',
-                notes: '', nextDate: '',
-                fbUrl: '#', igUrl: '#', ttUrl: '#', lnUrl: '#',
-                adminPass: 'admin1234', showBanner: true, apiUrl: GOOGLE_SHEETS_API_URL,
-                profileImg: '', bannerImg: '',
+                notes: '',
+                nextDate: '',
+                fbUrl: '#',
+                igUrl: '#',
+                ttUrl: '#',
+                lnUrl: '#',
+                adminPass: 'admin1234',
+                showBanner: true,
+                profileImg: '',
+                bannerImg: '',
                 socialVisible: {
                     fb: true,
                     ig: true,
@@ -2805,15 +2806,12 @@
                 selectedFontPrimary: 'Sarabun',
                 selectedFontDisplay: 'Kanit'
             },
-            cache: {
-                data: null,
-                lastSync: 0
-            },
             activityLog: [],
-            lastDataHash: null  // สำหรับตรวจจับการเปลี่ยนแปลง
+            syncStatus: 'synced', // synced, syncing, error
+            lastSyncTime: null
         };
 
-        // รายการฟอนต์ทั้งหมดที่รองรับภาษาไทย
+        // รายการฟอนต์ทั้งหมด
         const availableFonts = [
             { name: 'Sarabun', category: 'sans-serif', preview: 'สวัสดี,Nexo' },
             { name: 'Kanit', category: 'sans-serif', preview: 'สวัสดี,Nexo' },
@@ -2845,59 +2843,188 @@
             done: { label: 'เสร็จแล้ว', cls: 'badge-done', pct: 100 }
         };
 
-        // ─── HELPER FUNCTIONS ─────────────────────────────────────────────
-        function computeDataHash() {
-            return JSON.stringify({
-                tasks: state.tasks,
-                settings: state.settings
-            });
-        }
+        // ========== GOOGLE SHEETS SYNC FUNCTIONS ==========
 
-        function showNotification(message) {
-            const badge = document.getElementById('notificationBadge');
-            const text = document.getElementById('notificationText');
-            text.textContent = message;
-            badge.classList.add('show');
-            setTimeout(() => {
-                badge.classList.remove('show');
-            }, 5000);
+        function updateSyncStatus(status, message) {
+            state.syncStatus = status;
+            const statusEl = document.getElementById('syncStatus');
+            const textEl = document.getElementById('syncStatusText');
+            if (statusEl) {
+                statusEl.className = `sync-status ${status}`;
+            }
+            if (textEl) {
+                if (status === 'syncing') textEl.textContent = 'กำลังซิงค์...';
+                else if (status === 'error') textEl.textContent = message || 'เชื่อมต่อล้มเหลว';
+                else textEl.textContent = 'ซิงค์แล้ว';
+            }
         }
 
         function showConnectionError(show) {
-            const errorBanner = document.getElementById('connectionError');
-            if (show) {
-                errorBanner.classList.add('show');
-            } else {
-                errorBanner.classList.remove('show');
+            const errorEl = document.getElementById('connectionError');
+            if (errorEl) {
+                if (show) errorEl.classList.add('show');
+                else errorEl.classList.remove('show');
             }
         }
 
-        // ─── GOOGLE SHEETS SYNC FUNCTIONS ─────────────────────────────────
-        let syncInProgress = false;
-        let autoSyncInterval = null;
-        let connectionRetryCount = 0;
-        let lastSuccessfulSync = 0;
+        // ดึงข้อมูลจาก Google Sheets
+        async function fetchTasksFromSheets() {
+            updateSyncStatus('syncing', '');
+            showConnectionError(false);
 
-        function updateSyncStatus(status, message) {
-            const syncStatusDiv = document.getElementById('syncStatus');
-            const syncTextSpan = document.getElementById('syncStatusText');
-            if (!syncStatusDiv) return;
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getTasks&t=${Date.now()}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
 
-            syncStatusDiv.className = 'sync-status';
-            if (status === 'synced') {
-                syncStatusDiv.classList.add('synced');
-                syncTextSpan.innerHTML = message || 'ซิงค์ข้อมูลสำเร็จ';
-                showConnectionError(false);
-                connectionRetryCount = 0;
-            } else if (status === 'syncing') {
-                syncStatusDiv.classList.add('syncing');
-                syncTextSpan.innerHTML = message || 'กำลังซิงค์...';
-            } else if (status === 'error') {
-                syncStatusDiv.classList.add('error');
-                syncTextSpan.innerHTML = message || 'ซิงค์ข้อมูลล้มเหลว';
+                if (data.success && data.tasks) {
+                    state.tasks = data.tasks;
+                    state.lastSyncTime = new Date();
+                    updateSyncStatus('synced', '');
+
+                    // บันทึก cache เผื่อ offline
+                    localStorage.setItem('queueflow_tasks_cache', JSON.stringify({
+                        tasks: state.tasks,
+                        timestamp: state.lastSyncTime
+                    }));
+
+                    return true;
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Fetch tasks error:', error);
+                updateSyncStatus('error', error.message);
                 showConnectionError(true);
+
+                // ลองโหลดจาก cache
+                const cached = localStorage.getItem('queueflow_tasks_cache');
+                if (cached) {
+                    try {
+                        const cacheData = JSON.parse(cached);
+                        state.tasks = cacheData.tasks;
+                        toast('ใช้ข้อมูลจาก Cache (ออฟไลน์)', 'info');
+                        return true;
+                    } catch (e) { }
+                }
+                return false;
             }
         }
+
+        // บันทึกข้อมูลไปยัง Google Sheets
+        async function syncTasksToSheets(action, taskData) {
+            updateSyncStatus('syncing', '');
+
+            try {
+                const payload = {
+                    action: action,
+                    data: taskData,
+                    timestamp: new Date().toISOString()
+                };
+
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // เนื่องจาก Apps Script ใช้ no-cors
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                // หลังจากบันทึกสำเร็จ ให้ดึงข้อมูลล่าสุดมาแสดง
+                await fetchTasksFromSheets();
+                updateSyncStatus('synced', '');
+                return true;
+            } catch (error) {
+                console.error('Sync error:', error);
+                updateSyncStatus('error', error.message);
+                showConnectionError(true);
+                return false;
+            }
+        }
+
+        // syncNow function สำหรับ manual sync
+        async function syncNow() {
+            toast('กำลังซิงค์ข้อมูล...', 'info');
+            const success = await fetchTasksFromSheets();
+            if (success) {
+                updateStats();
+                renderQueues();
+                renderCalendar();
+                updateChart();
+                toast('ซิงค์ข้อมูลสำเร็จ ✅', 'success');
+            } else {
+                toast('ไม่สามารถซิงค์ข้อมูลได้ ❌', 'error');
+            }
+        }
+
+        // ========== CRUD OPERATIONS WITH SYNC ==========
+
+        async function saveQueue() {
+            const orderId = document.getElementById('f_orderId').value.trim();
+            const customer = document.getElementById('f_customer').value.trim();
+            const type = document.getElementById('f_type').value.trim();
+            if (!customer || !type) { toast('กรุณากรอกชื่อลูกค้าและประเภทงาน', 'error'); return; }
+
+            const task = {
+                id: state.editingId || 'q' + Date.now(),
+                orderId: orderId || `ORD-${Date.now().toString().slice(-6)}`,
+                customer, type,
+                channel: document.getElementById('f_channel').value,
+                contact: document.getElementById('f_contact').value.trim(),
+                price: parseFloat(document.getElementById('f_price').value) || 0,
+                status: document.getElementById('f_status').value,
+                urgent: state.urgency === 'urgent',
+                date: document.getElementById('f_date').value,
+                deadline: document.getElementById('f_deadline').value,
+                note: document.getElementById('f_note').value.trim(),
+                num: state.editingId ? state.tasks.find(t => t.id === state.editingId)?.num : state.tasks.length + 1
+            };
+
+            const action = state.editingId ? 'update' : 'add';
+            const success = await syncTasksToSheets(action, task);
+
+            if (success) {
+                closeModal('queueModal');
+                addToActivityLog(state.editingId ? 'แก้ไขคิวงาน' : 'เพิ่มคิวงาน', `${task.customer} - ${task.type}`);
+                toast(state.editingId ? 'แก้ไขคิวสำเร็จ ✅' : 'เพิ่มคิวสำเร็จ ✅', 'success');
+                state.editingId = null;
+            } else {
+                toast('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง', 'error');
+            }
+        }
+
+        async function updateStatus(id, newStatus) {
+            const t = state.tasks.find(t => t.id === id);
+            if (!t) return;
+            const oldStatus = t.status;
+            const updatedTask = { ...t, status: newStatus };
+
+            const success = await syncTasksToSheets('update', updatedTask);
+            if (success) {
+                addToActivityLog('เปลี่ยนสถานะ', `${t.customer}: ${oldStatus} -> ${newStatus}`);
+                toast('อัปเดตสถานะสำเร็จ', 'success');
+            } else {
+                toast('เกิดข้อผิดพลาด', 'error');
+            }
+        }
+
+        async function confirmDelete() {
+            const deletedTask = state.tasks.find(t => t.id === state.deletingId);
+            if (!deletedTask) return;
+
+            const success = await syncTasksToSheets('delete', { id: state.deletingId });
+            if (success) {
+                closeModal('confirmModal');
+                addToActivityLog('ลบคิวงาน', `${deletedTask.customer} - ${deletedTask.type}`);
+                toast('ลบคิวสำเร็จ', 'info');
+                state.deletingId = null;
+            } else {
+                toast('เกิดข้อผิดพลาด', 'error');
+            }
+        }
+
+        // ========== ACTIVITY LOG (ยังเก็บใน localStorage) ==========
 
         function addToActivityLog(action, details) {
             const logEntry = {
@@ -2908,28 +3035,20 @@
                 user: state.isAdmin ? 'Admin' : 'User'
             };
             state.activityLog.unshift(logEntry);
-
-            // เก็บเฉพาะ 100 รายการล่าสุด
             if (state.activityLog.length > 100) {
                 state.activityLog = state.activityLog.slice(0, 100);
             }
-
-            // บันทึกลง localStorage
             localStorage.setItem('queueflow_activity_log', JSON.stringify(state.activityLog));
-
-            // อัปเดต UI ถ้าเปิด modal อยู่
             updateActivityLogUI();
         }
 
         function updateActivityLogUI() {
             const logContainer = document.getElementById('activityLog');
             if (!logContainer) return;
-
             if (state.activityLog.length === 0) {
                 logContainer.innerHTML = '<div class="log-entry">- ไม่มีประวัติ -</div>';
                 return;
             }
-
             logContainer.innerHTML = state.activityLog.slice(0, 30).map(log => `
                 <div class="log-entry">
                     <span class="time">[${log.time}]</span>
@@ -2945,664 +3064,404 @@
                 localStorage.removeItem('queueflow_activity_log');
                 updateActivityLogUI();
                 toast('ล้างประวัติการเปลี่ยนแปลงเรียบร้อยแล้ว', 'success');
-                pushOnChange();
             }
         }
 
-        // JSONP helper — วิธีเดียวที่ผ่าน CORS ของ Google Apps Script ได้
-        function jsonpRequest(url, timeoutMs = 15000) {
-            return new Promise((resolve, reject) => {
-                const cbName = '__qf_cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-                const script = document.createElement('script');
-                let done = false;
+        // ========== SETTINGS (เก็บใน localStorage เท่านั้น) ==========
 
-                const cleanup = () => {
-                    done = true;
-                    delete window[cbName];
-                    if (script.parentNode) script.parentNode.removeChild(script);
-                };
-
-                const timer = setTimeout(() => {
-                    cleanup();
-                    reject(new Error('Timeout'));
-                }, timeoutMs);
-
-                window[cbName] = (data) => {
-                    clearTimeout(timer);
-                    cleanup();
-                    resolve(data);
-                };
-
-                script.onerror = () => {
-                    clearTimeout(timer);
-                    cleanup();
-                    reject(new Error('Script load error'));
-                };
-
-                script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName + '&_t=' + Date.now();
-                document.head.appendChild(script);
-            });
+        function loadSettings() {
+            const saved = localStorage.getItem('queueflow_settings');
+            if (saved) {
+                try {
+                    const savedSettings = JSON.parse(saved);
+                    state.settings = { ...state.settings, ...savedSettings };
+                } catch (e) { }
+            }
         }
 
-        async function syncWithGoogleSheets() {
-            const apiUrl = state.settings.apiUrl || GOOGLE_SHEETS_API_URL;
+        function saveSettingsToLocal() {
+            localStorage.setItem('queueflow_settings', JSON.stringify(state.settings));
+        }
 
-            if (syncInProgress) {
-                return false;
-            }
+        // ========== INITIALIZATION ==========
 
-            syncInProgress = true;
-            updateSyncStatus('syncing', 'กำลังซิงค์ข้อมูล...');
+        window.addEventListener('DOMContentLoaded', async () => {
+            // โหลด settings และ theme ก่อน
+            loadSettings();
+            loadCustomTheme();
+            loadFontSelection();
 
-            try {
-                // ใช้ JSONP — วิธีเดียวที่ผ่าน CORS ของ Google Apps Script ได้
-                const data = await jsonpRequest(apiUrl + '?action=fetchAllData', 15000);
-
-                if (!data || !data.success) throw new Error((data && data.error) || 'Invalid response');
-
-                if (!data.data) throw new Error('No data returned');
-
-                {
-                    const oldHash = computeDataHash();
-
-                    // อัปเดตข้อมูลจาก Google Sheets
-                    if (data.data.tasks) {
-                        state.tasks = data.data.tasks;
-                    }
-                    if (data.data.settings) {
-                        state.settings = { ...state.settings, ...data.data.settings };
-                        if (!state.settings.socialVisible) {
-                            state.settings.socialVisible = { fb: true, ig: true, tt: true, ln: true };
-                        }
-                        if (!state.settings.selectedFontPrimary) {
-                            state.settings.selectedFontPrimary = 'Sarabun';
-                        }
-                        if (!state.settings.selectedFontDisplay) {
-                            state.settings.selectedFontDisplay = 'Kanit';
-                        }
-                        if (!state.settings.customTheme) {
-                            state.settings.customTheme = {
-                                accent: '#39FF14', green: '#00FFB2', gold: '#FFE600',
-                                rose: '#fb7185', text: '#efefef', bg: '#080808', card: '#111111'
-                            };
-                        }
-                        // ตรวจสอบและตั้งค่า API URL
-                        if (!state.settings.apiUrl) {
-                            state.settings.apiUrl = GOOGLE_SHEETS_API_URL;
-                        }
-                    }
-
-                    if (data.data.activityLog) {
-                        state.activityLog = data.data.activityLog;
-                    }
-
-                    // อัปเดต cache
-                    state.cache.data = { tasks: state.tasks, settings: state.settings };
-                    state.cache.lastSync = Date.now();
-                    lastSuccessfulSync = Date.now();
-
-                    // บันทึกลง localStorage
-                    saveToLocal();
-
-                    // ตรวจสอบการเปลี่ยนแปลงและแจ้งเตือน
-                    const newHash = computeDataHash();
-                    if (oldHash !== newHash && oldHash !== null) {
-                        showNotification('มีการอัปเดตข้อมูลจาก Google Sheets');
-                    }
-
-                    // รีเฟรช UI
-                    applySettings();
-                    applyCustomTheme(state.settings.customTheme);
-                    applyFonts();
-                    updateSocialVisibility();
-                    updateStats();
-                    renderQueues();
-                    renderCalendar();
-                    updateUploadPermissions();
-                    renderFontSelector();
+            // โหลด activity log
+            const savedLog = localStorage.getItem('queueflow_activity_log');
+            if (savedLog) {
+                try {
+                    state.activityLog = JSON.parse(savedLog);
                     updateActivityLogUI();
-                    updateChart();
-
-                    updateSyncStatus('synced', 'ซิงค์ข้อมูลสำเร็จ');
-                    return true;
-                }
-
-            } catch (error) {
-                console.error('Sync error:', error);
-                let errorMessage = error.message;
-                if (error.name === 'AbortError') {
-                    errorMessage = 'การเชื่อมต่อหมดเวลา';
-                } else if (error.message === 'Failed to fetch') {
-                    errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์';
-                }
-                updateSyncStatus('error', 'ซิงค์ล้มเหลว: ' + errorMessage);
-                toast('ไม่สามารถเชื่อมต่อ Google Sheets ได้: ' + errorMessage, 'error');
-                return false;
-            } finally {
-                syncInProgress = false;
-            }
-        }
-
-        async function pushToGoogleSheets() {
-            const apiUrl = state.settings.apiUrl || GOOGLE_SHEETS_API_URL;
-
-            try {
-                const payload = {
-                    tasks: state.tasks,
-                    settings: state.settings,
-                    activityLog: state.activityLog
-                };
-
-                // ใช้ JSONP — วิธีเดียวที่ผ่าน CORS ของ Google Apps Script
-                const data = await jsonpRequest(
-                    apiUrl + '?action=saveAllData&payload=' + encodeURIComponent(JSON.stringify(payload)),
-                    20000
-                );
-
-                return !!(data && data.success);
-
-            } catch (error) {
-                console.error('Push error:', error);
-                return false;
-            }
-        }
-
-        async function manualSync() {
-            if (syncInProgress) {
-                toast('กำลังซิงค์ข้อมูลอยู่ โปรดรอสักครู่...', 'info');
-                return;
-            }
-            toast('กำลังซิงค์ข้อมูล...', 'info');
-            await syncWithGoogleSheets();
-        }
-
-        // ฟังก์ชัน push ข้อมูลเมื่อมีการเปลี่ยนแปลง
-        async function pushOnChange() {
-            const apiUrl = state.settings.apiUrl || GOOGLE_SHEETS_API_URL;
-            if (apiUrl && !syncInProgress) {
-                const success = await pushToGoogleSheets();
-                if (success) {
-                    state.cache.data = { tasks: state.tasks, settings: state.settings };
-                    state.cache.lastSync = Date.now();
-                    updateSyncStatus('synced', 'บันทึกข้อมูลสำเร็จ');
-                }
-            }
-        }
-
-        // ─── DATA IMPORT/EXPORT FUNCTIONS ─────────────────────────────────
-        function exportToCSV() {
-            if (state.tasks.length === 0) {
-                toast('ไม่มีข้อมูลที่จะส่งออก', 'error');
-                return;
+                } catch (e) { }
             }
 
-            const headers = ['id', 'orderId', 'customer', 'type', 'channel', 'contact', 'price', 'status', 'urgent', 'date', 'deadline', 'note', 'num'];
-            const csvRows = [headers.join(',')];
+            // โหลดข้อมูลจาก Google Sheets
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            await fetchTasksFromSheets();
 
-            for (const task of state.tasks) {
-                const row = headers.map(header => {
-                    let value = task[header] !== undefined ? task[header] : '';
-                    if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-                        value = `"${value.replace(/"/g, '""')}"`;
-                    }
-                    return value;
-                });
-                csvRows.push(row.join(','));
-            }
+            // อัปเดต UI
+            applySettings();
+            updateSocialVisibility();
+            updateStats();
+            renderQueues();
+            renderCalendar();
+            updateUploadPermissions();
+            renderFontSelector();
+            updateChart();
 
-            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `queueflow_export_${new Date().toISOString().split('T')[0]}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+            document.getElementById('loadingOverlay').classList.add('hidden');
 
-            toast('ส่งออกข้อมูลเป็น CSV สำเร็จ', 'success');
-            addToActivityLog('ส่งออกข้อมูล', 'CSV');
-            pushOnChange();
-        }
-
-        function exportToExcel() {
-            if (state.tasks.length === 0) {
-                toast('ไม่มีข้อมูลที่จะส่งออก', 'error');
-                return;
-            }
-
-            const headers = ['ID', 'Order ID', 'ชื่อลูกค้า', 'ประเภทงาน', 'ช่องทาง', 'ข้อมูลติดต่อ', 'ราคา', 'สถานะ', 'เร่งด่วน', 'วันที่รับงาน', 'กำหนดส่ง', 'หมายเหตุ', 'คิว'];
-            let html = '<html><head><meta charset="UTF-8"><title>QueueFlow Export</title></head><body><table border="1">';
-            html += '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
-
-            for (const task of state.tasks) {
-                html += '<tr>';
-                html += `<td>${task.id || ''}</td>`;
-                html += `<td>${task.orderId || ''}</td>`;
-                html += `<td>${task.customer || ''}</td>`;
-                html += `<td>${task.type || ''}</td>`;
-                html += `<td>${task.channel || ''}</td>`;
-                html += `<td>${task.contact || ''}</td>`;
-                html += `<td>${task.price || 0}</td>`;
-                html += `<td>${task.status || ''}</td>`;
-                html += `<td>${task.urgent ? 'เร่งด่วน' : 'ปกติ'}</td>`;
-                html += `<td>${task.date || ''}</td>`;
-                html += `<td>${task.deadline || ''}</td>`;
-                html += `<td>${(task.note || '').replace(/</g, '&lt;')}</td>`;
-                html += `<td>${task.num || ''}</td>`;
-                html += '</tr>';
-            }
-
-            html += '</table></body></html>';
-
-            const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `queueflow_export_${new Date().toISOString().split('T')[0]}.xls`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-
-            toast('ส่งออกข้อมูลเป็น Excel สำเร็จ', 'success');
-            addToActivityLog('ส่งออกข้อมูล', 'Excel');
-            pushOnChange();
-        }
-
-        async function importDataFromFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            toast('กำลังนำเข้าข้อมูล...', 'info');
-
-            try {
-                const text = await file.text();
-                const lines = text.split('\n');
-                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-
-                const newTasks = [];
-                for (let i = 1; i < lines.length; i++) {
-                    if (!lines[i].trim()) continue;
-
-                    const values = [];
-                    let inQuotes = false;
-                    let currentValue = '';
-                    const row = lines[i];
-
-                    for (let j = 0; j < row.length; j++) {
-                        const char = row[j];
-                        if (char === '"') {
-                            inQuotes = !inQuotes;
-                        } else if (char === ',' && !inQuotes) {
-                            values.push(currentValue);
-                            currentValue = '';
-                        } else {
-                            currentValue += char;
-                        }
-                    }
-                    values.push(currentValue);
-
-                    const task = {};
-                    headers.forEach((header, idx) => {
-                        if (idx < values.length) {
-                            let value = values[idx].replace(/^"|"$/g, '');
-                            if (header === 'price') value = parseFloat(value) || 0;
-                            if (header === 'urgent') value = value === 'true' || value === 'เร่งด่วน';
-                            task[header] = value;
-                        }
-                    });
-
-                    if (task.customer && task.type) {
-                        if (!task.id) task.id = 'q' + Date.now() + '_' + i;
-                        if (!task.num) task.num = state.tasks.length + newTasks.length + 1;
-                        newTasks.push(task);
-                    }
-                }
-
-                if (newTasks.length > 0) {
-                    state.tasks = [...state.tasks, ...newTasks];
-                    saveToLocal();
-                    await pushOnChange();
+            // ตั้ง interval auto-sync ทุก 30 วินาที
+            setInterval(async () => {
+                if (navigator.onLine) {
+                    await fetchTasksFromSheets();
                     updateStats();
                     renderQueues();
                     renderCalendar();
                     updateChart();
-                    toast(`นำเข้าข้อมูลสำเร็จ ${newTasks.length} รายการ`, 'success');
-                    addToActivityLog('นำเข้าข้อมูล', `${newTasks.length} รายการ`);
-                } else {
-                    toast('ไม่พบข้อมูลที่สามารถนำเข้าได้', 'error');
                 }
+            }, 30000);
+        });
 
-            } catch (error) {
-                console.error('Import error:', error);
-                toast('เกิดข้อผิดพลาดในการนำเข้าข้อมูล', 'error');
+        // ========== REMAINING FUNCTIONS (คงเดิมจาก localStorage version) ==========
+
+        function updateStats() {
+            const total = state.tasks.length;
+            const done = state.tasks.filter(t => t.status === 'done').length;
+            const active = total - done;
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statActive').textContent = active;
+            document.getElementById('statDone').textContent = done;
+
+            const today = new Date().toISOString().split('T')[0];
+            const todayTasks = state.tasks.filter(t => t.date === today || t.deadline === today);
+            const todayDone = todayTasks.filter(t => t.status === 'done').length;
+            const pct = todayTasks.length > 0 ? Math.round(todayDone / todayTasks.length * 100) : 0;
+
+            const circumference = 2 * Math.PI * 26;
+            const offset = circumference * (1 - pct / 100);
+            const ringFill = document.getElementById('ringFill');
+            if (ringFill) {
+                ringFill.style.strokeDasharray = circumference;
+                ringFill.style.strokeDashoffset = offset;
             }
 
-            event.target.value = '';
+            document.getElementById('heartPct').textContent = pct + '%';
+            document.getElementById('heartDesc').textContent = `งานที่เสร็จวันนี้ ${todayDone} จาก ${todayTasks.length} งาน`;
+            const ringBarFill = document.getElementById('ringBarFill');
+            if (ringBarFill) ringBarFill.style.width = pct + '%';
         }
 
-        // ─── CHART FUNCTIONS ─────────────────────────────────────────────
+        function renderQueues() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            let tasks = state.tasks.filter(t => {
+                const ms = !search || t.customer.toLowerCase().includes(search) || t.type.toLowerCase().includes(search) || (t.orderId && t.orderId.toLowerCase().includes(search));
+                const mf = state.filter === 'all' || (state.filter === 'done' && t.status === 'done') || (state.filter === 'active' && t.status !== 'done');
+                return ms && mf;
+            });
+            const grid = document.getElementById('queueGrid');
+            const empty = document.getElementById('emptyState');
+            document.getElementById('queueCount').textContent = tasks.length;
+            if (tasks.length === 0) { grid.innerHTML = ''; empty.style.display = ''; return; }
+            empty.style.display = 'none';
+            grid.innerHTML = tasks.map((t, i) => {
+                const s = STATUS[t.status] || STATUS.waiting;
+                const cc = t.channel === 'LINE' ? 'channel-line' : t.channel === 'Facebook' ? 'channel-fb' : t.channel === 'Instagram' ? 'channel-ig' : '';
+                const orderIdDisplay = t.orderId ? `<span><i class="fas fa-hashtag" style="color:var(--gold)"></i>${esc(t.orderId)}</span>` : '';
+                return `
+<div class="q-card ${t.urgent ? 'urgent' : ''}" style="animation-delay:${i * .05}s">
+  <div class="q-num">${t.num || i + 1}</div>
+  <div class="q-header">
+    <div class="q-customer">${esc(t.customer)}</div>
+    <div class="q-type"><i class="fas fa-tag" style="font-size:10px;margin-right:4px"></i>${esc(t.type)}</div>
+  </div>
+  <div class="q-badges">
+    <span class="badge ${t.urgent ? 'badge-urgent' : 'badge-normal'}">${t.urgent ? '⚡ เร่งด่วน' : '● ปกติ'}</span>
+    <span class="badge ${s.cls}">${s.label}</span>
+  </div>
+  <div class="q-info">
+    ${orderIdDisplay}
+    <span><i class="fab fa-${t.channel === 'LINE' ? 'line' : t.channel === 'Facebook' ? 'facebook-f' : t.channel === 'Instagram' ? 'instagram' : 'comment'} ${cc}"></i>${esc(t.channel)}</span>
+    ${t.date ? `<span><i class="fas fa-calendar-day date-icon"></i>${formatDate(t.date)}</span>` : ''}
+    ${t.deadline ? `<span><i class="fas fa-hourglass-half deadline-icon"></i>${formatDate(t.deadline)}</span>` : ''}
+  </div>
+  <div class="q-info">
+    <span class="${state.isAdmin ? '' : 'contact-blur'}"><i class="fas fa-link"></i>${esc(t.contact || '—')}</span>
+  </div>
+  ${t.price ? `<div class="q-price">฿${t.price.toLocaleString()}</div>` : ''}
+  <div class="prog-wrap">
+    <div class="prog-label"><span>ความคืบหน้า</span><span>${s.pct}%</span></div>
+    <div class="prog-track"><div class="prog-fill" style="width:${s.pct}%"></div></div>
+  </div>
+  ${t.note ? `<div class="q-note"><i class="fas fa-pen" style="margin-right:4px"></i>${esc(t.note)}</div>` : ''}
+  ${state.isAdmin ? `
+  <div class="q-actions">
+    <select class="status-select" onchange="updateStatus('${t.id}',this.value)">
+      ${Object.entries(STATUS).map(([k, v]) => `<option value="${k}"${t.status === k ? ' selected' : ''}>${v.label}</option>`).join('')}
+    </select>
+    <button class="btn btn-sm" onclick="openEditModal('${t.id}')"><i class="fas fa-edit"></i></button>
+    <button class="btn btn-sm" onclick="openDeleteModal('${t.id}')" style="color:var(--rose)"><i class="fas fa-trash-alt"></i></button>
+  </div>`: ''}
+</div>`;
+            }).join('');
+        }
+
+        function openEditModal(id) {
+            const t = state.tasks.find(t => t.id === id);
+            if (!t) return;
+            state.editingId = id;
+            state.urgency = t.urgent ? 'urgent' : 'normal';
+            document.getElementById('queueModalTitle').innerHTML = '<i class="fas fa-edit"></i> แก้ไขคิวงาน';
+            document.getElementById('f_orderId').value = t.orderId || '';
+            document.getElementById('f_customer').value = t.customer || '';
+            document.getElementById('f_type').value = t.type || '';
+            document.getElementById('f_channel').value = t.channel || 'LINE';
+            document.getElementById('f_contact').value = t.contact || '';
+            document.getElementById('f_price').value = t.price || '';
+            document.getElementById('f_status').value = t.status || 'waiting';
+            document.getElementById('f_date').value = t.date || '';
+            document.getElementById('f_deadline').value = t.deadline || '';
+            document.getElementById('f_note').value = t.note || '';
+            selectUrgency(state.urgency);
+            openModal('queueModal');
+        }
+
+        function openAddModal() {
+            state.editingId = null;
+            state.urgency = 'normal';
+            document.getElementById('queueModalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> เพิ่มคิวงาน';
+            ['f_orderId', 'f_customer', 'f_type', 'f_contact', 'f_note'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('f_price').value = '';
+            document.getElementById('f_channel').value = 'LINE';
+            document.getElementById('f_status').value = 'waiting';
+            document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('f_deadline').value = '';
+            selectUrgency('normal');
+            openModal('queueModal');
+        }
+
+        function openDeleteModal(id) {
+            state.deletingId = id;
+            openModal('confirmModal');
+        }
+
+        function selectUrgency(val) {
+            state.urgency = val;
+            const on = val === 'normal';
+            document.getElementById('opt_normal').className = 'radio-opt ' + (on ? 'selected-normal' : '');
+            document.getElementById('opt_urgent').className = 'radio-opt ' + (!on ? 'selected-urgent' : '');
+        }
+
+        // ========== FILTER & VIEW ==========
+
+        function setFilter(f, el) {
+            state.filter = f;
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            renderQueues();
+        }
+
+        function switchView(v) {
+            state.view = v;
+            document.getElementById('listViewWrap').classList.toggle('hidden', v !== 'list');
+            document.getElementById('calendarView').classList.toggle('active', v === 'calendar');
+            document.getElementById('listViewBtn').classList.toggle('active', v === 'list');
+            document.getElementById('calViewBtn').classList.toggle('active', v === 'calendar');
+            if (v === 'calendar') renderCalendar();
+        }
+
+        function toggleView() {
+            switchView(state.view === 'list' ? 'calendar' : 'list');
+            document.getElementById('viewToggleBtn').innerHTML = state.view === 'list' ? '<i class="fas fa-table-list"></i>' : '<i class="fas fa-calendar-alt"></i>';
+        }
+
+        // ========== CALENDAR ==========
+
+        function renderCalendar() {
+            const y = state.calYear, m = state.calMonth;
+            const months = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+            document.getElementById('calTitle').textContent = `${months[m]} ${y + 543}`;
+            const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+            const today = new Date();
+            const firstDay = new Date(y, m, 1).getDay();
+            const daysInMonth = new Date(y, m + 1, 0).getDate();
+            const daysInPrev = new Date(y, m, 0).getDate();
+            const taskDates = new Set(state.tasks.flatMap(t => [t.date, t.deadline].filter(Boolean)));
+            let html = days.map(d => `<div class="cal-day-label">${d}</div>`).join('');
+            for (let i = 0; i < firstDay; i++) html += `<div class="cal-day other-month">${daysInPrev - firstDay + 1 + i}</div>`;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const ds = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const isToday = today.getFullYear() === y && today.getMonth() === m && today.getDate() === d;
+                const isSel = state.selectedCalDate === ds;
+                const ht = taskDates.has(ds);
+                html += `<div class="cal-day ${isToday ? 'today' : ''} ${isSel ? 'selected' : ''} ${ht ? 'has-tasks' : ''}" onclick="selectCalDate('${ds}')">${d}</div>`;
+            }
+            document.getElementById('calGrid').innerHTML = html;
+            if (state.selectedCalDate) renderCalDay(state.selectedCalDate);
+        }
+
+        function selectCalDate(ds) {
+            state.selectedCalDate = ds;
+            renderCalendar();
+        }
+
+        function renderCalDay(ds) {
+            const tasks = state.tasks.filter(t => t.date === ds || t.deadline === ds);
+            const el = document.getElementById('calSelectedTasks');
+            if (!tasks.length) {
+                el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text3);font-size:12px"><i class="fas fa-calendar-times"></i> ไม่มีงานในวันนี้</div>`;
+                return;
+            }
+            el.innerHTML = `<div class="section-title" style="margin-top:16px"><i class="fas fa-tasks"></i> งานวันที่ ${formatDate(ds)} <span class="count">${tasks.length}</span></div>` +
+                tasks.map(t => {
+                    const s = STATUS[t.status] || STATUS.waiting;
+                    const orderIdDisplay = t.orderId ? `<div class="q-type" style="font-size:11px;color:var(--gold)">📌 ${esc(t.orderId)}</div>` : '';
+                    return `<div class="q-card" style="margin-bottom:10px">
+        <div class="q-num">${t.num}</div>
+        <div class="q-header"><div class="q-customer">${esc(t.customer)}</div><div class="q-type">${esc(t.type)}</div>${orderIdDisplay}</div>
+        <div class="q-badges"><span class="badge ${s.cls}">${s.label}</span></div>
+        ${t.price ? `<div class="q-price">฿${t.price.toLocaleString()}</div>` : ''}
+      </div>`;
+                }).join('');
+        }
+
+        function prevMonth() {
+            if (state.calMonth === 0) { state.calMonth = 11; state.calYear--; }
+            else state.calMonth--;
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            if (state.calMonth === 11) { state.calMonth = 0; state.calYear++; }
+            else state.calMonth++;
+            renderCalendar();
+        }
+
+        // ========== CHART ==========
+
         let chartInstance = null;
 
         function updateChart() {
             const ctx = document.getElementById('statsChart')?.getContext('2d');
             if (!ctx) return;
-
             const today = new Date();
             const dates = [];
             const completedCounts = [];
             const totalCounts = [];
-
             for (let i = 6; i >= 0; i--) {
                 const date = new Date(today);
                 date.setDate(today.getDate() - i);
                 const dateStr = date.toISOString().split('T')[0];
                 const dateDisplay = `${date.getDate()}/${date.getMonth() + 1}`;
                 dates.push(dateDisplay);
-
                 const tasksOnDate = state.tasks.filter(t => t.date === dateStr);
                 const completedOnDate = tasksOnDate.filter(t => t.status === 'done').length;
                 completedCounts.push(completedOnDate);
                 totalCounts.push(tasksOnDate.length);
             }
-
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
-
+            if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: dates,
                     datasets: [
-                        {
-                            label: 'งานที่เสร็จ',
-                            data: completedCounts,
-                            backgroundColor: 'rgba(57, 255, 20, 0.5)',
-                            borderColor: '#39FF14',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'งานทั้งหมด',
-                            data: totalCounts,
-                            backgroundColor: 'rgba(255, 230, 0, 0.3)',
-                            borderColor: '#FFE600',
-                            borderWidth: 1
-                        }
+                        { label: 'งานที่เสร็จ', data: completedCounts, backgroundColor: 'rgba(57, 255, 20, 0.5)', borderColor: '#39FF14', borderWidth: 1 },
+                        { label: 'งานทั้งหมด', data: totalCounts, backgroundColor: 'rgba(255, 230, 0, 0.3)', borderColor: '#FFE600', borderWidth: 1 }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#efefef'
-                            }
-                        }
-                    },
+                    plugins: { legend: { labels: { color: '#efefef' } } },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                color: '#efefef',
-                                stepSize: 1
-                            },
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                color: '#efefef'
-                            },
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            }
-                        }
+                        y: { beginAtZero: true, ticks: { color: '#efefef', stepSize: 1 }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                        x: { ticks: { color: '#efefef' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
                     }
                 }
             });
         }
 
-        // ─── FONT FUNCTIONS ───────────────────────────────────────────────
-        function applyFonts() {
-            const root = document.documentElement;
-            const primaryFont = state.settings.selectedFontPrimary || 'Sarabun';
-            const displayFont = state.settings.selectedFontDisplay || 'Kanit';
-            root.style.setProperty('--font-primary', `'${primaryFont}', sans-serif`);
-            root.style.setProperty('--font-display', `'${displayFont}', sans-serif`);
-            localStorage.setItem('queueflow_selected_fonts', JSON.stringify({
-                primary: primaryFont,
-                display: displayFont
-            }));
+        // ========== SETTINGS UI FUNCTIONS ==========
+
+        function applySettings() {
+            const s = state.settings;
+            document.getElementById('shopNameDisplay').textContent = s.shopName || 'Creative Studio';
+            document.getElementById('shopTagline').textContent = s.tagline || '';
+            const ann = s.announcement || '';
+            if (ann) {
+                ['marqueeText1', 'marqueeText2', 'marqueeText3'].forEach(id => {
+                    document.getElementById(id).innerHTML = `<i class="fas fa-bullhorn"></i> &nbsp;${ann}`;
+                });
+                document.getElementById('marqueeBar').style.display = '';
+            } else { document.getElementById('marqueeBar').style.display = 'none'; }
+            if (s.notes) { document.getElementById('notesText').textContent = s.notes; document.getElementById('notesBlock').classList.add('visible'); }
+            else { document.getElementById('notesBlock').classList.remove('visible'); }
+            if (s.nextDate) { document.getElementById('nextDateText').textContent = formatDate(s.nextDate); document.getElementById('nextDateChip').style.display = 'inline-flex'; }
+            else { document.getElementById('nextDateChip').style.display = 'none'; }
+            const { fbUrl, igUrl, ttUrl, lnUrl } = s;
+            if (fbUrl && fbUrl != '#') document.getElementById('fbBtn').href = fbUrl;
+            if (igUrl && igUrl != '#') document.getElementById('igBtn').href = igUrl;
+            if (ttUrl && ttUrl != '#') document.getElementById('ttBtn').href = ttUrl;
+            if (lnUrl && lnUrl != '#') document.getElementById('lnBtn').href = lnUrl;
+            if (s.profileImg) { document.getElementById('shopAvatarImg').src = s.profileImg; document.getElementById('shopAvatarImg').style.display = ''; document.getElementById('shopAvatarFallback').style.display = 'none'; }
+            if (s.bannerImg) { document.getElementById('bannerImg').src = s.bannerImg; document.getElementById('bannerImg').style.display = ''; }
+            document.getElementById('shopBanner').style.display = s.showBanner !== false ? '' : 'none';
         }
 
-        function loadFontSelection() {
-            const saved = localStorage.getItem('queueflow_selected_fonts');
-            if (saved) {
-                try {
-                    const fonts = JSON.parse(saved);
-                    state.settings.selectedFontPrimary = fonts.primary || 'Sarabun';
-                    state.settings.selectedFontDisplay = fonts.display || 'Kanit';
-                } catch (e) { }
-            }
-            applyFonts();
+        function saveSettings() {
+            const s = state.settings;
+            s.shopName = document.getElementById('s_shopName').value;
+            s.tagline = document.getElementById('s_tagline').value;
+            s.announcement = document.getElementById('s_announcement').value;
+            s.notes = document.getElementById('s_notes').value;
+            s.nextDate = document.getElementById('s_nextDate').value;
+            s.fbUrl = document.getElementById('s_fbUrl').value || '#';
+            s.igUrl = document.getElementById('s_igUrl').value || '#';
+            s.ttUrl = document.getElementById('s_ttUrl').value || '#';
+            s.lnUrl = document.getElementById('s_lnUrl').value || '#';
+            const np = document.getElementById('s_adminPass').value;
+            if (np) s.adminPass = np;
+            saveCustomTheme();
+            saveSocialVisibility();
+            saveSettingsToLocal();
+            applySettings();
+            closeModal('adminSettingsModal');
+            toast('บันทึกการตั้งค่าสำเร็จ ✅', 'success');
+            addToActivityLog('บันทึกการตั้งค่า', '');
         }
 
-        function selectFont(type, fontName) {
-            if (type === 'primary') {
-                state.settings.selectedFontPrimary = fontName;
-            } else {
-                state.settings.selectedFontDisplay = fontName;
-            }
-            applyFonts();
-            saveToLocal();
+        function populateSettings() {
+            const s = state.settings;
+            document.getElementById('s_shopName').value = s.shopName || '';
+            document.getElementById('s_tagline').value = s.tagline || '';
+            document.getElementById('s_announcement').value = s.announcement || '';
+            document.getElementById('s_notes').value = s.notes || '';
+            document.getElementById('s_nextDate').value = s.nextDate || '';
+            document.getElementById('s_fbUrl').value = s.fbUrl != '#' ? s.fbUrl : '';
+            document.getElementById('s_igUrl').value = s.igUrl != '#' ? s.igUrl : '';
+            document.getElementById('s_ttUrl').value = s.ttUrl != '#' ? s.ttUrl : '';
+            document.getElementById('s_lnUrl').value = s.lnUrl != '#' ? s.lnUrl : '';
+            document.getElementById('s_showBanner').checked = s.showBanner !== false;
+            document.getElementById('s_adminPass').value = '';
+            updateColorPickerValues();
+            loadSocialToggleState();
             renderFontSelector();
-            pushOnChange();
-            toast(`เปลี่ยนฟอนต์${type === 'primary' ? 'หลัก' : 'หัวข้อ'} เป็น ${fontName} แล้ว ✨`, 'success');
-            addToActivityLog('เปลี่ยนฟอนต์', `${type === 'primary' ? 'หลัก' : 'หัวข้อ'} -> ${fontName}`);
+            updateActivityLogUI();
         }
 
-        function resetToDefaultFont() {
-            state.settings.selectedFontPrimary = 'Sarabun';
-            state.settings.selectedFontDisplay = 'Kanit';
-            applyFonts();
-            saveToLocal();
-            renderFontSelector();
-            pushOnChange();
-            toast('คืนค่าฟอนต์เริ่มต้นแล้ว ✨', 'success');
-            addToActivityLog('คืนค่าฟอนต์', 'เริ่มต้น');
+        function toggleBannerVisibility() {
+            state.settings.showBanner = document.getElementById('s_showBanner').checked;
+            document.getElementById('shopBanner').style.display = state.settings.showBanner ? '' : 'none';
+            saveSettingsToLocal();
         }
 
-        function renderFontSelector() {
-            const container = document.getElementById('fontSelectorGrid');
-            if (!container) return;
+        // ========== THEME FUNCTIONS ==========
 
-            const primaryFont = state.settings.selectedFontPrimary;
-            const displayFont = state.settings.selectedFontDisplay;
-
-            container.innerHTML = `
-                <div class="settings-card" style="margin-bottom: 12px; background: var(--bg3);">
-                    <div class="settings-card-header" style="padding: 12px 16px;">
-                        <i class="fas fa-paragraph"></i>
-                        <h3 style="font-size: 13px;">ฟอนต์หลัก (เนื้อหา)</h3>
-                    </div>
-                    <div class="settings-card-body" style="padding: 12px;">
-                        <div class="font-selector-grid" style="max-height: 200px;">
-                            ${availableFonts.map(font => `
-                                <div class="font-option ${primaryFont === font.name ? 'selected' : ''}" 
-                                     onclick="selectFont('primary', '${font.name}')"
-                                     style="font-family: '${font.name}', sans-serif;">
-                                    <span class="font-name">${font.name}</span>
-                                    <span class="font-preview">${font.preview}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-                <div class="settings-card" style="background: var(--bg3);">
-                    <div class="settings-card-header" style="padding: 12px 16px;">
-                        <i class="fas fa-heading"></i>
-                        <h3 style="font-size: 13px;">ฟอนต์หัวข้อ (Display)</h3>
-                    </div>
-                    <div class="settings-card-body" style="padding: 12px;">
-                        <div class="font-selector-grid" style="max-height: 200px;">
-                            ${availableFonts.map(font => `
-                                <div class="font-option ${displayFont === font.name ? 'selected' : ''}" 
-                                     onclick="selectFont('display', '${font.name}')"
-                                     style="font-family: '${font.name}', sans-serif;">
-                                    <span class="font-name">${font.name}</span>
-                                    <span class="font-preview">${font.preview}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // ─── ADMIN UPLOAD CONTROL ────────────────────────────────────────
-        function updateUploadPermissions() {
-            const shopAvatar = document.getElementById('shopAvatar');
-            const shopBanner = document.getElementById('shopBanner');
-            const profileUploadZone = document.getElementById('profileUploadZone');
-            const bannerUploadZone = document.getElementById('bannerUploadZone');
-
-            if (state.isAdmin) {
-                shopAvatar.classList.add('admin-only');
-                shopAvatar.classList.remove('non-admin');
-                shopAvatar.style.cursor = 'pointer';
-                shopBanner.classList.add('admin-upload-mode');
-                if (profileUploadZone) profileUploadZone.style.pointerEvents = 'auto';
-                if (bannerUploadZone) bannerUploadZone.style.pointerEvents = 'auto';
-            } else {
-                shopAvatar.classList.remove('admin-only');
-                shopAvatar.classList.add('non-admin');
-                shopAvatar.style.cursor = 'default';
-                shopBanner.classList.remove('admin-upload-mode');
-                if (profileUploadZone) profileUploadZone.style.pointerEvents = 'none';
-                if (bannerUploadZone) bannerUploadZone.style.pointerEvents = 'none';
-            }
-        }
-
-        // URL Modal Functions
-        function openProfileUrlModal() {
-            if (!state.isAdmin) {
-                toast('เฉพาะแอดมินเท่านั้นที่สามารถเปลี่ยนรูปโปรไฟล์ได้ 🔒', 'error');
-                return;
-            }
-            document.getElementById('profileUrlInput').value = state.settings.profileImg || '';
-            updateProfilePreview();
-            openModal('profileUrlModal');
-        }
-
-        function openBannerUrlModal() {
-            if (!state.isAdmin) {
-                toast('เฉพาะแอดมินเท่านั้นที่สามารถเปลี่ยนแบนเนอร์ได้ 🔒', 'error');
-                return;
-            }
-            document.getElementById('bannerUrlInput').value = state.settings.bannerImg || '';
-            updateBannerPreview();
-            openModal('bannerUrlModal');
-        }
-
-        function updateProfilePreview() {
-            const url = document.getElementById('profileUrlInput').value;
-            const preview = document.getElementById('profilePreview');
-            if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:'))) {
-                preview.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.parentElement.innerHTML='<span style=\'color:var(--text3);font-size:12px;\'>รูปไม่สามารถโหลดได้</span>'">`;
-            } else {
-                preview.innerHTML = '<span style="color: var(--text3); font-size: 12px;">รอ URL</span>';
-            }
-        }
-
-        function updateBannerPreview() {
-            const url = document.getElementById('bannerUrlInput').value;
-            const preview = document.getElementById('bannerPreview');
-            if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:'))) {
-                preview.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.parentElement.innerHTML='<span style=\'color:var(--text3);font-size:12px;\'>รูปไม่สามารถโหลดได้</span>'">`;
-            } else {
-                preview.innerHTML = '<span style="color: var(--text3); font-size: 12px;">รอ URL</span>';
-            }
-        }
-
-        function saveProfileFromUrl() {
-            const url = document.getElementById('profileUrlInput').value.trim();
-            if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:'))) {
-                state.settings.profileImg = url;
-                document.getElementById('shopAvatarImg').src = url;
-                document.getElementById('shopAvatarImg').style.display = '';
-                document.getElementById('shopAvatarFallback').style.display = 'none';
-                saveToLocal();
-                closeModal('profileUrlModal');
-                pushOnChange();
-                toast('อัปเดตรูปโปรไฟล์สำเร็จ ✅', 'success');
-                addToActivityLog('อัปเดตรูปโปรไฟล์', url);
-            } else {
-                toast('กรุณาใส่ URL ที่ถูกต้อง (เริ่มต้นด้วย http:// หรือ https://)', 'error');
-            }
-        }
-
-        function saveBannerFromUrl() {
-            const url = document.getElementById('bannerUrlInput').value.trim();
-            if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:'))) {
-                state.settings.bannerImg = url;
-                document.getElementById('bannerImg').src = url;
-                document.getElementById('bannerImg').style.display = '';
-                document.getElementById('shopBanner').style.display = '';
-                saveToLocal();
-                closeModal('bannerUrlModal');
-                pushOnChange();
-                toast('อัปเดตรูปแบนเนอร์สำเร็จ ✅', 'success');
-                addToActivityLog('อัปเดตรูปแบนเนอร์', url);
-            } else {
-                toast('กรุณาใส่ URL ที่ถูกต้อง (เริ่มต้นด้วย http:// หรือ https://)', 'error');
-            }
-        }
-
-        // Add event listeners for URL inputs preview
-        document.getElementById('profileUrlInput')?.addEventListener('input', updateProfilePreview);
-        document.getElementById('bannerUrlInput')?.addEventListener('input', updateBannerPreview);
-
-        // ─── SOCIAL VISIBILITY FUNCTIONS ─────────────────────────────────
-        function updateSocialVisibility() {
-            const visible = state.settings.socialVisible;
-            const fbBtn = document.getElementById('fbBtn');
-            const igBtn = document.getElementById('igBtn');
-            const ttBtn = document.getElementById('ttBtn');
-            const lnBtn = document.getElementById('lnBtn');
-
-            if (fbBtn) fbBtn.classList.toggle('hidden-social', !visible.fb);
-            if (igBtn) igBtn.classList.toggle('hidden-social', !visible.ig);
-            if (ttBtn) ttBtn.classList.toggle('hidden-social', !visible.tt);
-            if (lnBtn) lnBtn.classList.toggle('hidden-social', !visible.ln);
-        }
-
-        function loadSocialToggleState() {
-            document.getElementById('toggle_fb').checked = state.settings.socialVisible.fb;
-            document.getElementById('toggle_ig').checked = state.settings.socialVisible.ig;
-            document.getElementById('toggle_tt').checked = state.settings.socialVisible.tt;
-            document.getElementById('toggle_ln').checked = state.settings.socialVisible.ln;
-        }
-
-        function saveSocialVisibility() {
-            state.settings.socialVisible = {
-                fb: document.getElementById('toggle_fb').checked,
-                ig: document.getElementById('toggle_ig').checked,
-                tt: document.getElementById('toggle_tt').checked,
-                ln: document.getElementById('toggle_ln').checked
-            };
-            updateSocialVisibility();
-            saveToLocal();
-            pushOnChange();
-            addToActivityLog('ปรับแต่ง Social Media', JSON.stringify(state.settings.socialVisible));
-        }
-
-        // ─── CUSTOM THEME FUNCTIONS ─────────────────────────────────────
         function applyCustomTheme(theme) {
             const root = document.documentElement;
             root.style.setProperty('--accent', theme.accent);
@@ -3619,16 +3478,10 @@
             root.style.setProperty('--card2', adjustBrightness(theme.card, 8));
             root.style.setProperty('--border', `rgba(${hexToRgb(theme.text)}, 0.07)`);
             root.style.setProperty('--border2', `rgba(${hexToRgb(theme.text)}, 0.13)`);
-
             const ringGrad = document.getElementById('ringGrad');
             if (ringGrad) {
-                ringGrad.innerHTML = `
-                    <stop offset="0%" stop-color="${theme.accent}" />
-                    <stop offset="50%" stop-color="${theme.green}" />
-                    <stop offset="100%" stop-color="${theme.gold}" />
-                `;
+                ringGrad.innerHTML = `<stop offset="0%" stop-color="${theme.accent}" /><stop offset="50%" stop-color="${theme.green}" /><stop offset="100%" stop-color="${theme.gold}" />`;
             }
-
             localStorage.setItem('queueflow_custom_theme', JSON.stringify(theme));
         }
 
@@ -3643,9 +3496,7 @@
                 r = parseInt(hex.slice(1, 3), 16);
                 g = parseInt(hex.slice(3, 5), 16);
                 b = parseInt(hex.slice(5, 7), 16);
-            } else {
-                return hex;
-            }
+            } else { return hex; }
             r = Math.min(255, Math.max(0, r + percent));
             g = Math.min(255, Math.max(0, g + percent));
             b = Math.min(255, Math.max(0, b + percent));
@@ -3694,8 +3545,7 @@
             };
             state.settings.customTheme = theme;
             applyCustomTheme(theme);
-            saveToLocal();
-            pushOnChange();
+            saveSettingsToLocal();
             toast('ปรับแต่งสีเรียบร้อย! 🎨', 'success');
             addToActivityLog('ปรับแต่งสี', JSON.stringify(theme));
         }
@@ -3746,214 +3596,245 @@
             saveCustomTheme();
         }
 
-        // ─── TEST CONNECTION ─────────────────────────────────────────────
-        async function testGoogleSheetsConnection() {
-            const apiUrl = state.settings.apiUrl || GOOGLE_SHEETS_API_URL;
+        // ========== FONT FUNCTIONS ==========
 
-            updateSyncStatus('syncing', 'กำลังทดสอบการเชื่อมต่อ...');
-
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'testConnection' }),
-                    signal: controller.signal
-                });
-
-                clearTimeout(timeoutId);
-
-                const result = await response.json();
-
-                if (result.success) {
-                    toast('เชื่อมต่อ Google Sheets สำเร็จ! 🎉', 'success');
-                    updateSyncStatus('synced', 'เชื่อมต่อสำเร็จ');
-                    return true;
-                } else {
-                    toast('เชื่อมต่อล้มเหลว: ' + (result.error || 'ไม่ทราบสาเหตุ'), 'error');
-                    updateSyncStatus('error', 'เชื่อมต่อล้มเหลว');
-                    return false;
-                }
-            } catch (error) {
-                let errorMessage = error.message;
-                if (error.name === 'AbortError') {
-                    errorMessage = 'การเชื่อมต่อหมดเวลา';
-                } else if (error.message === 'Failed to fetch') {
-                    errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์';
-                }
-                toast('ไม่สามารถเชื่อมต่อ API ได้: ' + errorMessage, 'error');
-                updateSyncStatus('error', 'เชื่อมต่อล้มเหลว');
-                return false;
-            }
+        function applyFonts() {
+            const root = document.documentElement;
+            const primaryFont = state.settings.selectedFontPrimary || 'Sarabun';
+            const displayFont = state.settings.selectedFontDisplay || 'Kanit';
+            root.style.setProperty('--font-primary', `'${primaryFont}', sans-serif`);
+            root.style.setProperty('--font-display', `'${displayFont}', sans-serif`);
+            saveSettingsToLocal();
         }
 
-        // ─── INIT ─────────────────────────────────────────────────────────
-        window.addEventListener('DOMContentLoaded', async () => {
-            loadCustomTheme();
-            loadFontSelection();
-            loadFromLocal();
-
-            // โหลด activity log
-            const savedLog = localStorage.getItem('queueflow_activity_log');
-            if (savedLog) {
+        function loadFontSelection() {
+            const saved = localStorage.getItem('queueflow_selected_fonts');
+            if (saved) {
                 try {
-                    state.activityLog = JSON.parse(savedLog);
-                    updateActivityLogUI();
+                    const fonts = JSON.parse(saved);
+                    state.settings.selectedFontPrimary = fonts.primary || 'Sarabun';
+                    state.settings.selectedFontDisplay = fonts.display || 'Kanit';
                 } catch (e) { }
-            }
-
-            applySettings();
-            updateSocialVisibility();
-            updateStats();
-            renderQueues();
-            renderCalendar();
-            updateUploadPermissions();
-            renderFontSelector();
-            updateChart();
-
-            // เริ่ม sync กับ Google Sheets
-            await syncWithGoogleSheets();
-
-            // ตั้ง auto sync ทุก 5 วินาที (ตามที่ร้องขอ)
-            if (autoSyncInterval) clearInterval(autoSyncInterval);
-            autoSyncInterval = setInterval(async () => {
-                await syncWithGoogleSheets();
-            }, 5000); // 5 วินาที
-
-            setTimeout(() => document.getElementById('loadingOverlay').classList.add('hidden'), 700);
-        });
-
-        function loadFromLocal() {
-            try {
-                const saved = localStorage.getItem('queueflow_data');
-                if (saved) {
-                    const d = JSON.parse(saved);
-                    if (d.tasks) state.tasks = d.tasks;
-                    if (d.settings) {
-                        state.settings = { ...state.settings, ...d.settings };
-                        if (!state.settings.socialVisible) {
-                            state.settings.socialVisible = { fb: true, ig: true, tt: true, ln: true };
-                        }
-                        if (!state.settings.selectedFontPrimary) {
-                            state.settings.selectedFontPrimary = 'Sarabun';
-                        }
-                        if (!state.settings.selectedFontDisplay) {
-                            state.settings.selectedFontDisplay = 'Kanit';
-                        }
-                        if (!state.settings.apiUrl) {
-                            state.settings.apiUrl = GOOGLE_SHEETS_API_URL;
-                        }
-                    }
-                }
-            } catch (e) { }
-            if (state.tasks.length === 0) {
-                state.tasks = [
-                    { id: 'q1', orderId: 'ORD-001', customer: 'คุณนภา', type: 'Logo Design', channel: 'LINE', contact: '@napa_art', price: 1500, status: 'inprogress', urgent: false, date: new Date().toISOString().split('T')[0], deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], note: 'ต้องการโลโก้มินิมอล 2 version', num: 1 },
-                    { id: 'q2', orderId: 'INV-2024-002', customer: 'คุณสมชาย', type: 'Banner Facebook', channel: 'Facebook', contact: 'fb.com/somchai', price: 800, status: 'review', urgent: true, date: new Date().toISOString().split('T')[0], deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], note: '', num: 2 },
-                    { id: 'q3', orderId: 'ORD-003', customer: 'ร้านกาแฟบ้านสวน', type: 'Menu Design', channel: 'LINE', contact: '@baansuan_coffee', price: 3500, status: 'notstart', urgent: false, date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], deadline: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], note: 'เมนู 2 หน้า', num: 3 },
-                    { id: 'q4', orderId: 'CARD-004', customer: 'คุณปิยะ', type: 'Business Card', channel: 'Instagram', contact: '@piya.design', price: 600, status: 'done', urgent: false, date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], note: '', num: 4 },
-                    { id: 'q5', orderId: 'XYZ-005', customer: 'บริษัท XYZ', type: 'Infographic', channel: 'LINE', contact: '@xyz_corp', price: 2800, status: 'fixing', urgent: true, date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], deadline: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], note: 'แก้ตัวเลขสถิติหน้า 2', num: 5 },
-                ];
             }
             applyFonts();
         }
 
-        function saveToLocal() {
-            localStorage.setItem('queueflow_data', JSON.stringify({ tasks: state.tasks, settings: state.settings }));
-        }
-
-        // ─── SETTINGS ─────────────────────────────────────────────────────
-        function applySettings() {
-            const s = state.settings;
-            document.getElementById('shopNameDisplay').textContent = s.shopName || 'Creative Studio';
-            document.getElementById('shopTagline').textContent = s.tagline || '';
-            const ann = s.announcement || '';
-            if (ann) {
-                ['marqueeText1', 'marqueeText2', 'marqueeText3'].forEach(id => {
-                    document.getElementById(id).innerHTML = `<i class="fas fa-bullhorn"></i> &nbsp;${ann}`;
-                });
-                document.getElementById('marqueeBar').style.display = '';
-            } else { document.getElementById('marqueeBar').style.display = 'none'; }
-            if (s.notes) { document.getElementById('notesText').textContent = s.notes; document.getElementById('notesBlock').classList.add('visible'); }
-            else { document.getElementById('notesBlock').classList.remove('visible'); }
-            if (s.nextDate) { document.getElementById('nextDateText').textContent = formatDate(s.nextDate); document.getElementById('nextDateChip').style.display = 'inline-flex'; }
-            else { document.getElementById('nextDateChip').style.display = 'none'; }
-            const { fbUrl, igUrl, ttUrl, lnUrl } = s;
-            if (fbUrl && fbUrl != '#') document.getElementById('fbBtn').href = fbUrl;
-            if (igUrl && igUrl != '#') document.getElementById('igBtn').href = igUrl;
-            if (ttUrl && ttUrl != '#') document.getElementById('ttBtn').href = ttUrl;
-            if (lnUrl && lnUrl != '#') document.getElementById('lnBtn').href = lnUrl;
-            if (s.profileImg) { document.getElementById('shopAvatarImg').src = s.profileImg; document.getElementById('shopAvatarImg').style.display = ''; document.getElementById('shopAvatarFallback').style.display = 'none'; }
-            if (s.bannerImg) { document.getElementById('bannerImg').src = s.bannerImg; document.getElementById('bannerImg').style.display = ''; }
-            document.getElementById('shopBanner').style.display = s.showBanner !== false ? '' : 'none';
-        }
-
-        function saveSettings() {
-            const s = state.settings;
-            s.shopName = document.getElementById('s_shopName').value;
-            s.tagline = document.getElementById('s_tagline').value;
-            s.apiUrl = document.getElementById('s_apiUrl').value;
-            s.announcement = document.getElementById('s_announcement').value;
-            s.notes = document.getElementById('s_notes').value;
-            s.nextDate = document.getElementById('s_nextDate').value;
-            s.fbUrl = document.getElementById('s_fbUrl').value || '#';
-            s.igUrl = document.getElementById('s_igUrl').value || '#';
-            s.ttUrl = document.getElementById('s_ttUrl').value || '#';
-            s.lnUrl = document.getElementById('s_lnUrl').value || '#';
-            const np = document.getElementById('s_adminPass').value; if (np) s.adminPass = np;
-            saveCustomTheme();
-            saveSocialVisibility();
-            saveToLocal();
-            applySettings();
-            closeModal('adminSettingsModal');
-            pushOnChange();
-            toast('บันทึกการตั้งค่าสำเร็จ ✅', 'success');
-            addToActivityLog('บันทึกการตั้งค่า', '');
-        }
-
-        function populateSettings() {
-            const s = state.settings;
-            document.getElementById('s_shopName').value = s.shopName || '';
-            document.getElementById('s_tagline').value = s.tagline || '';
-            document.getElementById('s_apiUrl').value = s.apiUrl || GOOGLE_SHEETS_API_URL;
-            document.getElementById('s_announcement').value = s.announcement || '';
-            document.getElementById('s_notes').value = s.notes || '';
-            document.getElementById('s_nextDate').value = s.nextDate || '';
-            document.getElementById('s_fbUrl').value = s.fbUrl != '#' ? s.fbUrl : '';
-            document.getElementById('s_igUrl').value = s.igUrl != '#' ? s.igUrl : '';
-            document.getElementById('s_ttUrl').value = s.ttUrl != '#' ? s.ttUrl : '';
-            document.getElementById('s_lnUrl').value = s.lnUrl != '#' ? s.lnUrl : '';
-            document.getElementById('s_showBanner').checked = s.showBanner !== false;
-            document.getElementById('s_adminPass').value = '';
-            updateColorPickerValues();
-            loadSocialToggleState();
+        function selectFont(type, fontName) {
+            if (type === 'primary') {
+                state.settings.selectedFontPrimary = fontName;
+            } else {
+                state.settings.selectedFontDisplay = fontName;
+            }
+            applyFonts();
+            saveSettingsToLocal();
             renderFontSelector();
-            updateActivityLogUI();
+            toast(`เปลี่ยนฟอนต์${type === 'primary' ? 'หลัก' : 'หัวข้อ'} เป็น ${fontName} แล้ว ✨`, 'success');
+            addToActivityLog('เปลี่ยนฟอนต์', `${type === 'primary' ? 'หลัก' : 'หัวข้อ'} -> ${fontName}`);
         }
 
-        function toggleBannerVisibility() {
-            state.settings.showBanner = document.getElementById('s_showBanner').checked;
-            document.getElementById('shopBanner').style.display = state.settings.showBanner ? '' : 'none';
+        function resetToDefaultFont() {
+            state.settings.selectedFontPrimary = 'Sarabun';
+            state.settings.selectedFontDisplay = 'Kanit';
+            applyFonts();
+            saveSettingsToLocal();
+            renderFontSelector();
+            toast('คืนค่าฟอนต์เริ่มต้นแล้ว ✨', 'success');
+            addToActivityLog('คืนค่าฟอนต์', 'เริ่มต้น');
         }
 
-        // ─── ADMIN ────────────────────────────────────────────────────────
+        function renderFontSelector() {
+            const container = document.getElementById('fontSelectorGrid');
+            if (!container) return;
+            const primaryFont = state.settings.selectedFontPrimary;
+            const displayFont = state.settings.selectedFontDisplay;
+            container.innerHTML = `
+                <div class="settings-card" style="margin-bottom: 12px; background: var(--bg3);">
+                    <div class="settings-card-header" style="padding: 12px 16px;">
+                        <i class="fas fa-paragraph"></i>
+                        <h3 style="font-size: 13px;">ฟอนต์หลัก (เนื้อหา)</h3>
+                    </div>
+                    <div class="settings-card-body" style="padding: 12px;">
+                        <div class="font-selector-grid" style="max-height: 200px;">
+                            ${availableFonts.map(font => `
+                                <div class="font-option ${primaryFont === font.name ? 'selected' : ''}" 
+                                     onclick="selectFont('primary', '${font.name}')"
+                                     style="font-family: '${font.name}', sans-serif;">
+                                    <span class="font-name">${font.name}</span>
+                                    <span class="font-preview">${font.preview}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-card" style="background: var(--bg3);">
+                    <div class="settings-card-header" style="padding: 12px 16px;">
+                        <i class="fas fa-heading"></i>
+                        <h3 style="font-size: 13px;">ฟอนต์หัวข้อ (Display)</h3>
+                    </div>
+                    <div class="settings-card-body" style="padding: 12px;">
+                        <div class="font-selector-grid" style="max-height: 200px;">
+                            ${availableFonts.map(font => `
+                                <div class="font-option ${displayFont === font.name ? 'selected' : ''}" 
+                                     onclick="selectFont('display', '${font.name}')"
+                                     style="font-family: '${font.name}', sans-serif;">
+                                    <span class="font-name">${font.name}</span>
+                                    <span class="font-preview">${font.preview}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ========== SOCIAL VISIBILITY ==========
+
+        function updateSocialVisibility() {
+            const visible = state.settings.socialVisible;
+            const fbBtn = document.getElementById('fbBtn');
+            const igBtn = document.getElementById('igBtn');
+            const ttBtn = document.getElementById('ttBtn');
+            const lnBtn = document.getElementById('lnBtn');
+            if (fbBtn) fbBtn.classList.toggle('hidden-social', !visible.fb);
+            if (igBtn) igBtn.classList.toggle('hidden-social', !visible.ig);
+            if (ttBtn) ttBtn.classList.toggle('hidden-social', !visible.tt);
+            if (lnBtn) lnBtn.classList.toggle('hidden-social', !visible.ln);
+        }
+
+        function loadSocialToggleState() {
+            document.getElementById('toggle_fb').checked = state.settings.socialVisible.fb;
+            document.getElementById('toggle_ig').checked = state.settings.socialVisible.ig;
+            document.getElementById('toggle_tt').checked = state.settings.socialVisible.tt;
+            document.getElementById('toggle_ln').checked = state.settings.socialVisible.ln;
+        }
+
+        function saveSocialVisibility() {
+            state.settings.socialVisible = {
+                fb: document.getElementById('toggle_fb').checked,
+                ig: document.getElementById('toggle_ig').checked,
+                tt: document.getElementById('toggle_tt').checked,
+                ln: document.getElementById('toggle_ln').checked
+            };
+            updateSocialVisibility();
+            saveSettingsToLocal();
+            addToActivityLog('ปรับแต่ง Social Media', JSON.stringify(state.settings.socialVisible));
+        }
+
+        // ========== ADMIN UPLOAD CONTROL ==========
+
+        function updateUploadPermissions() {
+            const shopAvatar = document.getElementById('shopAvatar');
+            const shopBanner = document.getElementById('shopBanner');
+            const profileUploadZone = document.getElementById('profileUploadZone');
+            const bannerUploadZone = document.getElementById('bannerUploadZone');
+            if (state.isAdmin) {
+                shopAvatar.classList.add('admin-only');
+                shopAvatar.classList.remove('non-admin');
+                shopAvatar.style.cursor = 'pointer';
+                shopBanner.classList.add('admin-upload-mode');
+                if (profileUploadZone) profileUploadZone.style.pointerEvents = 'auto';
+                if (bannerUploadZone) bannerUploadZone.style.pointerEvents = 'auto';
+            } else {
+                shopAvatar.classList.remove('admin-only');
+                shopAvatar.classList.add('non-admin');
+                shopAvatar.style.cursor = 'default';
+                shopBanner.classList.remove('admin-upload-mode');
+                if (profileUploadZone) profileUploadZone.style.pointerEvents = 'none';
+                if (bannerUploadZone) bannerUploadZone.style.pointerEvents = 'none';
+            }
+        }
+
+        // ========== URL MODAL FUNCTIONS ==========
+
+        function openProfileUrlModal() {
+            if (!state.isAdmin) { toast('เฉพาะแอดมินเท่านั้นที่สามารถเปลี่ยนรูปโปรไฟล์ได้ 🔒', 'error'); return; }
+            document.getElementById('profileUrlInput').value = state.settings.profileImg || '';
+            updateProfilePreview();
+            openModal('profileUrlModal');
+        }
+
+        function openBannerUrlModal() {
+            if (!state.isAdmin) { toast('เฉพาะแอดมินเท่านั้นที่สามารถเปลี่ยนแบนเนอร์ได้ 🔒', 'error'); return; }
+            document.getElementById('bannerUrlInput').value = state.settings.bannerImg || '';
+            updateBannerPreview();
+            openModal('bannerUrlModal');
+        }
+
+        function updateProfilePreview() {
+            const url = document.getElementById('profileUrlInput').value;
+            const preview = document.getElementById('profilePreview');
+            if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:'))) {
+                preview.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.parentElement.innerHTML='<span style=\'color:var(--text3);font-size:12px;\'>รูปไม่สามารถโหลดได้</span>'">`;
+            } else {
+                preview.innerHTML = '<span style="color: var(--text3); font-size: 12px;">รอ URL</span>';
+            }
+        }
+
+        function updateBannerPreview() {
+            const url = document.getElementById('bannerUrlInput').value;
+            const preview = document.getElementById('bannerPreview');
+            if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:'))) {
+                preview.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.parentElement.innerHTML='<span style=\'color:var(--text3);font-size:12px;\'>รูปไม่สามารถโหลดได้</span>'">`;
+            } else {
+                preview.innerHTML = '<span style="color: var(--text3); font-size: 12px;">รอ URL</span>';
+            }
+        }
+
+        function saveProfileFromUrl() {
+            const url = document.getElementById('profileUrlInput').value.trim();
+            if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:'))) {
+                state.settings.profileImg = url;
+                document.getElementById('shopAvatarImg').src = url;
+                document.getElementById('shopAvatarImg').style.display = '';
+                document.getElementById('shopAvatarFallback').style.display = 'none';
+                saveSettingsToLocal();
+                closeModal('profileUrlModal');
+                toast('อัปเดตรูปโปรไฟล์สำเร็จ ✅', 'success');
+                addToActivityLog('อัปเดตรูปโปรไฟล์', url);
+            } else {
+                toast('กรุณาใส่ URL ที่ถูกต้อง (เริ่มต้นด้วย http:// หรือ https://)', 'error');
+            }
+        }
+
+        function saveBannerFromUrl() {
+            const url = document.getElementById('bannerUrlInput').value.trim();
+            if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:'))) {
+                state.settings.bannerImg = url;
+                document.getElementById('bannerImg').src = url;
+                document.getElementById('bannerImg').style.display = '';
+                document.getElementById('shopBanner').style.display = '';
+                saveSettingsToLocal();
+                closeModal('bannerUrlModal');
+                toast('อัปเดตรูปแบนเนอร์สำเร็จ ✅', 'success');
+                addToActivityLog('อัปเดตรูปแบนเนอร์', url);
+            } else {
+                toast('กรุณาใส่ URL ที่ถูกต้อง (เริ่มต้นด้วย http:// หรือ https://)', 'error');
+            }
+        }
+
+        // ========== ADMIN AUTH ==========
+
         function openAdminLogin() { openModal('adminLoginModal'); document.getElementById('adminPasswordInput').value = ''; }
+
         async function doAdminLogin() {
             const pass = document.getElementById('adminPasswordInput').value;
             let ok = pass === state.settings.adminPass;
             if (ok) {
-                state.isAdmin = true; closeModal('adminLoginModal');
+                state.isAdmin = true;
+                closeModal('adminLoginModal');
                 document.getElementById('addQueueBtn').style.display = '';
                 document.getElementById('adminBtn').style.display = '';
                 document.getElementById('loginBtn').style.display = 'none';
                 document.getElementById('logoutBtn').style.display = '';
                 updateUploadPermissions();
-                renderQueues(); toast('เข้าสู่ระบบแอดมินสำเร็จ 🎉', 'success');
+                renderQueues();
+                toast('เข้าสู่ระบบแอดมินสำเร็จ 🎉', 'success');
                 addToActivityLog('เข้าสู่ระบบ', 'Admin');
-            } else { toast('รหัสผ่านไม่ถูกต้อง ❌', 'error'); }
+            } else {
+                toast('รหัสผ่านไม่ถูกต้อง ❌', 'error');
+            }
         }
+
         function logout() {
             state.isAdmin = false;
             document.getElementById('addQueueBtn').style.display = 'none';
@@ -3961,318 +3842,198 @@
             document.getElementById('loginBtn').style.display = '';
             document.getElementById('logoutBtn').style.display = 'none';
             updateUploadPermissions();
-            renderQueues(); toast('ออกจากระบบแล้ว', 'info');
+            renderQueues();
+            toast('ออกจากระบบแล้ว', 'info');
             addToActivityLog('ออกจากระบบ', '');
         }
 
-        // ─── QUEUE CRUD ───────────────────────────────────────────────────
-        function openAddModal() {
-            state.editingId = null; state.urgency = 'normal';
-            document.getElementById('queueModalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> เพิ่มคิวงาน';
-            ['f_orderId', 'f_customer', 'f_type', 'f_contact', 'f_note'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('f_price').value = '';
-            document.getElementById('f_channel').value = 'LINE';
-            document.getElementById('f_status').value = 'waiting';
-            document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('f_deadline').value = '';
-            selectUrgency('normal'); openModal('queueModal');
-        }
-        function openEditModal(id) {
-            const t = state.tasks.find(t => t.id === id); if (!t) return;
-            state.editingId = id; state.urgency = t.urgent ? 'urgent' : 'normal';
-            document.getElementById('queueModalTitle').innerHTML = '<i class="fas fa-edit"></i> แก้ไขคิวงาน';
-            document.getElementById('f_orderId').value = t.orderId || '';
-            document.getElementById('f_customer').value = t.customer || '';
-            document.getElementById('f_type').value = t.type || '';
-            document.getElementById('f_channel').value = t.channel || 'LINE';
-            document.getElementById('f_contact').value = t.contact || '';
-            document.getElementById('f_price').value = t.price || '';
-            document.getElementById('f_status').value = t.status || 'waiting';
-            document.getElementById('f_date').value = t.date || '';
-            document.getElementById('f_deadline').value = t.deadline || '';
-            document.getElementById('f_note').value = t.note || '';
-            selectUrgency(state.urgency); openModal('queueModal');
-        }
-        function selectUrgency(val) {
-            state.urgency = val; const on = val === 'normal';
-            document.getElementById('opt_normal').className = 'radio-opt ' + (on ? 'selected-normal' : '');
-            document.getElementById('opt_urgent').className = 'radio-opt ' + (!on ? 'selected-urgent' : '');
-        }
-        async function saveQueue() {
-            const orderId = document.getElementById('f_orderId').value.trim();
-            const customer = document.getElementById('f_customer').value.trim();
-            const type = document.getElementById('f_type').value.trim();
-            if (!customer || !type) { toast('กรุณากรอกชื่อลูกค้าและประเภทงาน', 'error'); return; }
-            const task = {
-                id: state.editingId || 'q' + Date.now(),
-                orderId: orderId || `ORD-${Date.now().toString().slice(-6)}`,
-                customer, type,
-                channel: document.getElementById('f_channel').value,
-                contact: document.getElementById('f_contact').value.trim(),
-                price: parseFloat(document.getElementById('f_price').value) || 0,
-                status: document.getElementById('f_status').value,
-                urgent: state.urgency === 'urgent',
-                date: document.getElementById('f_date').value,
-                deadline: document.getElementById('f_deadline').value,
-                note: document.getElementById('f_note').value.trim(),
-                num: state.editingId ? state.tasks.find(t => t.id === state.editingId)?.num : state.tasks.length + 1
-            };
-            if (state.editingId) {
-                const idx = state.tasks.findIndex(t => t.id === state.editingId);
-                state.tasks[idx] = task;
-                addToActivityLog('แก้ไขคิวงาน', `${task.customer} - ${task.type}`);
-            } else {
-                state.tasks.push(task);
-                addToActivityLog('เพิ่มคิวงาน', `${task.customer} - ${task.type}`);
+        // ========== IMPORT/EXPORT (Local only) ==========
+
+        function exportToCSV() {
+            if (state.tasks.length === 0) { toast('ไม่มีข้อมูลที่จะส่งออก', 'error'); return; }
+            const headers = ['id', 'orderId', 'customer', 'type', 'channel', 'contact', 'price', 'status', 'urgent', 'date', 'deadline', 'note', 'num'];
+            const csvRows = [headers.join(',')];
+            for (const task of state.tasks) {
+                const row = headers.map(header => {
+                    let value = task[header] !== undefined ? task[header] : '';
+                    if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+                        value = `"${value.replace(/"/g, '""')}"`;
+                    }
+                    return value;
+                });
+                csvRows.push(row.join(','));
             }
-            saveToLocal();
-            pushOnChange();
-            closeModal('queueModal'); updateStats(); renderQueues(); renderCalendar(); updateChart();
-            toast(state.editingId ? 'แก้ไขคิวสำเร็จ ✅' : 'เพิ่มคิวสำเร็จ ✅', 'success');
-        }
-        function openDeleteModal(id) { state.deletingId = id; openModal('confirmModal'); }
-        async function confirmDelete() {
-            const deletedTask = state.tasks.find(t => t.id === state.deletingId);
-            state.tasks = state.tasks.filter(t => t.id !== state.deletingId);
-            saveToLocal();
-            pushOnChange();
-            closeModal('confirmModal'); updateStats(); renderQueues(); renderCalendar(); updateChart();
-            addToActivityLog('ลบคิวงาน', deletedTask ? `${deletedTask.customer} - ${deletedTask.type}` : '');
-            toast('ลบคิวสำเร็จ', 'info');
-        }
-        async function updateStatus(id, newStatus) {
-            const t = state.tasks.find(t => t.id === id); if (!t) return;
-            const oldStatus = t.status;
-            t.status = newStatus; saveToLocal();
-            pushOnChange();
-            updateStats(); renderQueues();
-            addToActivityLog('เปลี่ยนสถานะ', `${t.customer}: ${oldStatus} -> ${newStatus}`);
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `queueflow_export_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            toast('ส่งออกข้อมูลเป็น CSV สำเร็จ', 'success');
+            addToActivityLog('ส่งออกข้อมูล', 'CSV');
         }
 
-        function getChannelIconClass(ch) {
-            return ch === 'LINE' ? 'channel-line' : ch === 'Facebook' ? 'channel-fb' : ch === 'Instagram' ? 'channel-ig' : '';
-        }
-
-        // ─── RENDER ───────────────────────────────────────────────────────
-        function renderQueues() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            let tasks = state.tasks.filter(t => {
-                const ms = !search || t.customer.toLowerCase().includes(search) || t.type.toLowerCase().includes(search) || (t.orderId && t.orderId.toLowerCase().includes(search));
-                const mf = state.filter === 'all' || (state.filter === 'done' && t.status === 'done') || (state.filter === 'active' && t.status !== 'done');
-                return ms && mf;
-            });
-            const grid = document.getElementById('queueGrid');
-            const empty = document.getElementById('emptyState');
-            document.getElementById('queueCount').textContent = tasks.length;
-            if (tasks.length === 0) { grid.innerHTML = ''; empty.style.display = ''; return; }
-            empty.style.display = 'none';
-            grid.innerHTML = tasks.map((t, i) => {
-                const s = STATUS[t.status] || STATUS.waiting;
-                const cc = getChannelIconClass(t.channel);
-                const orderIdDisplay = t.orderId ? `<span><i class="fas fa-hashtag" style="color:var(--gold)"></i>${esc(t.orderId)}</span>` : '';
-                return `
-<div class="q-card ${t.urgent ? 'urgent' : ''}" style="animation-delay:${i * .05}s">
-  <div class="q-num">${t.num || i + 1}</div>
-  <div class="q-header">
-    <div class="q-customer">${esc(t.customer)}</div>
-    <div class="q-type"><i class="fas fa-tag" style="font-size:10px;margin-right:4px"></i>${esc(t.type)}</div>
-  </div>
-  <div class="q-badges">
-    <span class="badge ${t.urgent ? 'badge-urgent' : 'badge-normal'}">${t.urgent ? '⚡ เร่งด่วน' : '● ปกติ'}</span>
-    <span class="badge ${s.cls}">${s.label}</span>
-  </div>
-  <div class="q-info">
-    ${orderIdDisplay}
-    <span><i class="fab fa-${t.channel === 'LINE' ? 'line' : t.channel === 'Facebook' ? 'facebook-f' : t.channel === 'Instagram' ? 'instagram' : 'comment'} ${cc}"></i>${esc(t.channel)}</span>
-    ${t.date ? `<span><i class="fas fa-calendar-day date-icon"></i>${formatDate(t.date)}</span>` : ''}
-    ${t.deadline ? `<span><i class="fas fa-hourglass-half deadline-icon"></i>${formatDate(t.deadline)}</span>` : ''}
-  </div>
-  <div class="q-info">
-    <span class="${state.isAdmin ? '' : 'contact-blur'}"><i class="fas fa-link"></i>${esc(t.contact || '—')}</span>
-  </div>
-  ${t.price ? `<div class="q-price">฿${t.price.toLocaleString()}</div>` : ''}
-  <div class="prog-wrap">
-    <div class="prog-label"><span>ความคืบหน้า</span><span>${s.pct}%</span></div>
-    <div class="prog-track"><div class="prog-fill" style="width:${s.pct}%"></div></div>
-  </div>
-  ${t.note ? `<div class="q-note"><i class="fas fa-pen" style="margin-right:4px"></i>${esc(t.note)}</div>` : ''}
-  ${state.isAdmin ? `
-  <div class="q-actions">
-    <select class="status-select" onchange="updateStatus('${t.id}',this.value)">
-      ${Object.entries(STATUS).map(([k, v]) => `<option value="${k}"${t.status === k ? ' selected' : ''}>${v.label}</option>`).join('')}
-    </select>
-    <button class="btn btn-sm" onclick="openEditModal('${t.id}')"><i class="fas fa-edit"></i></button>
-    <button class="btn btn-sm" onclick="openDeleteModal('${t.id}')" style="color:var(--rose)"><i class="fas fa-trash-alt"></i></button>
-  </div>`: ''}
-</div>`;
-            }).join('');
-        }
-
-        function updateStats() {
-            const total = state.tasks.length;
-            const done = state.tasks.filter(t => t.status === 'done').length;
-            const active = total - done;
-            document.getElementById('statTotal').textContent = total;
-            document.getElementById('statActive').textContent = active;
-            document.getElementById('statDone').textContent = done;
-
-            const today = new Date().toISOString().split('T')[0];
-            const todayTasks = state.tasks.filter(t => t.date === today || t.deadline === today);
-            const todayDone = todayTasks.filter(t => t.status === 'done').length;
-            const pct = todayTasks.length > 0 ? Math.round(todayDone / todayTasks.length * 100) : 0;
-
-            const circumference = 2 * Math.PI * 26;
-            const offset = circumference * (1 - pct / 100);
-            const ringFill = document.getElementById('ringFill');
-            if (ringFill) {
-                ringFill.style.strokeDasharray = circumference;
-                ringFill.style.strokeDashoffset = offset;
+        function exportToExcel() {
+            if (state.tasks.length === 0) { toast('ไม่มีข้อมูลที่จะส่งออก', 'error'); return; }
+            const headers = ['ID', 'Order ID', 'ชื่อลูกค้า', 'ประเภทงาน', 'ช่องทาง', 'ข้อมูลติดต่อ', 'ราคา', 'สถานะ', 'เร่งด่วน', 'วันที่รับงาน', 'กำหนดส่ง', 'หมายเหตุ', 'คิว'];
+            let html = '<html><head><meta charset="UTF-8"><title>QueueFlow Export</title></head><body><table border="1">';
+            html += '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+            for (const task of state.tasks) {
+                html += '<tr>';
+                html += `<td>${task.id || ''}</td>`;
+                html += `<td>${task.orderId || ''}</td>`;
+                html += `<td>${task.customer || ''}</td>`;
+                html += `<td>${task.type || ''}</td>`;
+                html += `<td>${task.channel || ''}</td>`;
+                html += `<td>${task.contact || ''}</td>`;
+                html += `<td>${task.price || 0}</td>`;
+                html += `<td>${task.status || ''}</td>`;
+                html += `<td>${task.urgent ? 'เร่งด่วน' : 'ปกติ'}</td>`;
+                html += `<td>${task.date || ''}</td>`;
+                html += `<td>${task.deadline || ''}</td>`;
+                html += `<td>${(task.note || '').replace(/</g, '&lt;')}</td>`;
+                html += `<td>${task.num || ''}</td>`;
+                html += '</tr>';
             }
-
-            document.getElementById('heartPct').textContent = pct + '%';
-            document.getElementById('heartDesc').textContent = `งานที่เสร็จวันนี้ ${todayDone} จาก ${todayTasks.length} งาน`;
-
-            const ringBarFill = document.getElementById('ringBarFill');
-            if (ringBarFill) ringBarFill.style.width = pct + '%';
+            html += '</table></body></html>';
+            const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `queueflow_export_${new Date().toISOString().split('T')[0]}.xls`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            toast('ส่งออกข้อมูลเป็น Excel สำเร็จ', 'success');
+            addToActivityLog('ส่งออกข้อมูล', 'Excel');
         }
 
-        // ─── FILTER & VIEW ────────────────────────────────────────────────
-        function setFilter(f, el) {
-            state.filter = f;
-            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-            el.classList.add('active'); renderQueues();
-        }
-        function switchView(v) {
-            state.view = v;
-            document.getElementById('listViewWrap').classList.toggle('hidden', v !== 'list');
-            document.getElementById('calendarView').classList.toggle('active', v === 'calendar');
-            document.getElementById('listViewBtn').classList.toggle('active', v === 'list');
-            document.getElementById('calViewBtn').classList.toggle('active', v === 'calendar');
-            if (v === 'calendar') renderCalendar();
-        }
-        function toggleView() {
-            switchView(state.view === 'list' ? 'calendar' : 'list');
-            document.getElementById('viewToggleBtn').innerHTML = state.view === 'list' ? '<i class="fas fa-table-list"></i>' : '<i class="fas fa-calendar-alt"></i>';
-        }
-
-        // ─── CALENDAR ─────────────────────────────────────────────────────
-        function renderCalendar() {
-            const y = state.calYear, m = state.calMonth;
-            const months = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-            document.getElementById('calTitle').textContent = `${months[m]} ${y + 543}`;
-            const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-            const today = new Date();
-            const firstDay = new Date(y, m, 1).getDay();
-            const daysInMonth = new Date(y, m + 1, 0).getDate();
-            const daysInPrev = new Date(y, m, 0).getDate();
-            const taskDates = new Set(state.tasks.flatMap(t => [t.date, t.deadline].filter(Boolean)));
-            let html = days.map(d => `<div class="cal-day-label">${d}</div>`).join('');
-            for (let i = 0; i < firstDay; i++) html += `<div class="cal-day other-month">${daysInPrev - firstDay + 1 + i}</div>`;
-            for (let d = 1; d <= daysInMonth; d++) {
-                const ds = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const isToday = today.getFullYear() === y && today.getMonth() === m && today.getDate() === d;
-                const isSel = state.selectedCalDate === ds;
-                const ht = taskDates.has(ds);
-                html += `<div class="cal-day ${isToday ? 'today' : ''} ${isSel ? 'selected' : ''} ${ht ? 'has-tasks' : ''}" onclick="selectCalDate('${ds}')">${d}</div>`;
+        async function importDataFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            toast('กำลังนำเข้าข้อมูล...', 'info');
+            try {
+                const text = await file.text();
+                const lines = text.split('\n');
+                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                const newTasks = [];
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+                    const values = [];
+                    let inQuotes = false;
+                    let currentValue = '';
+                    const row = lines[i];
+                    for (let j = 0; j < row.length; j++) {
+                        const char = row[j];
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === ',' && !inQuotes) {
+                            values.push(currentValue);
+                            currentValue = '';
+                        } else {
+                            currentValue += char;
+                        }
+                    }
+                    values.push(currentValue);
+                    const task = {};
+                    headers.forEach((header, idx) => {
+                        if (idx < values.length) {
+                            let value = values[idx].replace(/^"|"$/g, '');
+                            if (header === 'price') value = parseFloat(value) || 0;
+                            if (header === 'urgent') value = value === 'true' || value === 'เร่งด่วน';
+                            task[header] = value;
+                        }
+                    });
+                    if (task.customer && task.type) {
+                        if (!task.id) task.id = 'q' + Date.now() + '_' + i;
+                        if (!task.num) task.num = state.tasks.length + newTasks.length + 1;
+                        newTasks.push(task);
+                    }
+                }
+                if (newTasks.length > 0) {
+                    for (const task of newTasks) {
+                        await syncTasksToSheets('add', task);
+                    }
+                    toast(`นำเข้าข้อมูลสำเร็จ ${newTasks.length} รายการ`, 'success');
+                    addToActivityLog('นำเข้าข้อมูล', `${newTasks.length} รายการ`);
+                } else {
+                    toast('ไม่พบข้อมูลที่สามารถนำเข้าได้', 'error');
+                }
+            } catch (error) {
+                console.error('Import error:', error);
+                toast('เกิดข้อผิดพลาดในการนำเข้าข้อมูล', 'error');
             }
-            document.getElementById('calGrid').innerHTML = html;
-            if (state.selectedCalDate) renderCalDay(state.selectedCalDate);
+            event.target.value = '';
         }
-        function selectCalDate(ds) { state.selectedCalDate = ds; renderCalendar(); }
-        function renderCalDay(ds) {
-            const tasks = state.tasks.filter(t => t.date === ds || t.deadline === ds);
-            const el = document.getElementById('calSelectedTasks');
-            if (!tasks.length) { el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text3);font-size:12px"><i class="fas fa-calendar-times"></i> ไม่มีงานในวันนี้</div>`; return; }
-            el.innerHTML = `<div class="section-title" style="margin-top:16px"><i class="fas fa-tasks"></i> งานวันที่ ${formatDate(ds)} <span class="count">${tasks.length}</span></div>` +
-                tasks.map(t => {
-                    const s = STATUS[t.status] || STATUS.waiting;
-                    const orderIdDisplay = t.orderId ? `<div class="q-type" style="font-size:11px;color:var(--gold)">📌 ${esc(t.orderId)}</div>` : '';
-                    return `<div class="q-card" style="margin-bottom:10px">
-        <div class="q-num">${t.num}</div>
-        <div class="q-header"><div class="q-customer">${esc(t.customer)}</div><div class="q-type">${esc(t.type)}</div>${orderIdDisplay}</div>
-        <div class="q-badges"><span class="badge ${s.cls}">${s.label}</span></div>
-        ${t.price ? `<div class="q-price">฿${t.price.toLocaleString()}</div>` : ''}
-      </div>`;
-                }).join('');
-        }
-        function prevMonth() { if (state.calMonth === 0) { state.calMonth = 11; state.calYear--; } else state.calMonth--; renderCalendar(); }
-        function nextMonth() { if (state.calMonth === 11) { state.calMonth = 0; state.calYear++; } else state.calMonth++; renderCalendar(); }
 
-        // ─── IMAGE UPLOAD (Keep for compatibility but disabled) ─────────────────────────────────────────────────
         function handleProfileUpload(e) {
-            if (!state.isAdmin) {
-                toast('เฉพาะแอดมินเท่านั้นที่สามารถอัปโหลดรูปโปรไฟล์ได้ 🔒', 'error');
-                return;
-            }
-            toast('ระบบเปลี่ยนเป็นใช้ URL รูปภาพแล้ว กรุณาใช้ปุ่ม "คลิกเพื่อใส่ URL รูปภาพ" แทน', 'info');
-        }
-        function handleBannerUpload(e) {
-            if (!state.isAdmin) {
-                toast('เฉพาะแอดมินเท่านั้นที่สามารถอัปโหลดแบนเนอร์ได้ 🔒', 'error');
-                return;
-            }
+            if (!state.isAdmin) { toast('เฉพาะแอดมินเท่านั้นที่สามารถอัปโหลดรูปโปรไฟล์ได้ 🔒', 'error'); return; }
             toast('ระบบเปลี่ยนเป็นใช้ URL รูปภาพแล้ว กรุณาใช้ปุ่ม "คลิกเพื่อใส่ URL รูปภาพ" แทน', 'info');
         }
 
-        // ─── MODAL HELPERS ────────────────────────────────────────────────
+        function handleBannerUpload(e) {
+            if (!state.isAdmin) { toast('เฉพาะแอดมินเท่านั้นที่สามารถอัปโหลดแบนเนอร์ได้ 🔒', 'error'); return; }
+            toast('ระบบเปลี่ยนเป็นใช้ URL รูปภาพแล้ว กรุณาใช้ปุ่ม "คลิกเพื่อใส่ URL รูปภาพ" แทน', 'info');
+        }
+
+        // ========== MODAL HELPERS ==========
+
         function openModal(id) {
             if (id === 'adminSettingsModal') {
-                if (!state.isAdmin) {
-                    toast('เฉพาะแอดมินเท่านั้นที่สามารถเข้าถึงการตั้งค่าได้ 🔒', 'error');
-                    return;
-                }
+                if (!state.isAdmin) { toast('เฉพาะแอดมินเท่านั้นที่สามารถเข้าถึงการตั้งค่าได้ 🔒', 'error'); return; }
                 populateSettings();
                 const colorInputs = ['accent', 'green', 'gold', 'rose', 'text', 'bg', 'card'];
                 colorInputs.forEach(c => {
                     const picker = document.getElementById(`theme_${c}`);
                     const text = document.getElementById(`theme_${c}_text`);
                     if (picker && text) {
-                        const handler = () => {
-                            picker.value = text.value;
-                            saveCustomTheme();
-                        };
                         picker.onchange = () => { text.value = picker.value; saveCustomTheme(); };
-                        text.onchange = handler;
+                        text.onchange = () => { picker.value = text.value; saveCustomTheme(); };
                         text.oninput = () => { picker.value = text.value; };
                     }
                 });
                 ['fb', 'ig', 'tt', 'ln'].forEach(social => {
                     const toggle = document.getElementById(`toggle_${social}`);
-                    if (toggle) {
-                        toggle.onchange = () => saveSocialVisibility();
-                    }
+                    if (toggle) toggle.onchange = () => saveSocialVisibility();
                 });
             }
             document.getElementById(id).classList.add('open');
         }
+
         function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
         document.querySelectorAll('.modal-backdrop').forEach(el => {
             el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
         });
 
-        // ─── TOAST ────────────────────────────────────────────────────────
+        // ========== TOAST ==========
+
         function toast(msg, type = 'info') {
             const c = document.getElementById('toastContainer');
-            const t = document.createElement('div'); t.className = `toast toast-${type}`;
+            const t = document.createElement('div');
+            t.className = `toast toast-${type}`;
             t.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> ${msg}`;
             c.appendChild(t);
             setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 2500);
         }
 
-        // ─── UTILS ────────────────────────────────────────────────────────
+        // ========== UTILS ==========
+
         function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
         function formatDate(d) { if (!d) return ''; return new Date(d + 'T00:00:00').toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }); }
 
         document.getElementById('adminBtn').addEventListener('click', () => openModal('adminSettingsModal'));
         function toggleCheckbox(id) { const cb = document.getElementById(id); if (cb) { cb.checked = !cb.checked; toggleBannerVisibility(); } }
+        document.getElementById('shopAvatar').addEventListener('click', (e) => { if (state.isAdmin) { e.stopPropagation(); openProfileUrlModal(); } });
 
-        // เพิ่ม event listener สำหรับการคลิกที่ avatar (แอดมินเท่านั้น)
-        document.getElementById('shopAvatar').addEventListener('click', (e) => {
-            if (state.isAdmin) {
-                e.stopPropagation();
-                openProfileUrlModal();
-            }
-        });
+        document.getElementById('profileUrlInput')?.addEventListener('input', updateProfilePreview);
+        document.getElementById('bannerUrlInput')?.addEventListener('input', updateBannerPreview);
     </script>
 </body>
 
