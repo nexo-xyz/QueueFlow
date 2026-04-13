@@ -19,7 +19,6 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* CSS เดิมทั้งหมดคงไว้ ไม่มีการแก้ไข */
         :root {
             --bg-nexo: #0a0a0a;
             --surface-nexo: #111111;
@@ -1120,6 +1119,30 @@
             { name: 'Trirong', display: 'Trirong', category: 'Serif' },
         ];
 
+        // ─── PASTEL THEME PRESETS (20 สีพาสเทลน่ารัก) ─────────────────────────────
+        const PASTEL_THEMES = [
+            { name: '🌸 ซากุระ', colors: { bg: '#1a1418', surface: '#241c22', surface2: '#2d242b', surface3: '#362c34', border: '#3d333b', border2: '#4a3f48', text: '#f5e6f0', textSoft: '#d4b8cc', textMuted: '#9e8a98', accent: '#ffb3d9', white: '#ffe4f2', urgent: '#ff8fab' } },
+            { name: '🪻 ลาเวนเดอร์', colors: { bg: '#1a1823', surface: '#242131', surface2: '#2d2a3f', surface3: '#37334d', border: '#413c5b', border2: '#4f496b', text: '#f0eaff', textSoft: '#c5b8e5', textMuted: '#948ab5', accent: '#b8a9ff', white: '#e8e0ff', urgent: '#ff9eb5' } },
+            { name: '🍑 พีช', colors: { bg: '#1f1a18', surface: '#2d2420', surface2: '#3a2e28', surface3: '#473830', border: '#544238', border2: '#635045', text: '#fff0e6', textSoft: '#ffccb3', textMuted: '#b89887', accent: '#ffb08a', white: '#ffe0cc', urgent: '#ff7b7b' } },
+            { name: '🍵 มัทฉะ', colors: { bg: '#161c17', surface: '#1e2620', surface2: '#263129', surface3: '#2e3c32', border: '#36473b', border2: '#415548', text: '#e8f5e9', textSoft: '#b8e0c0', textMuted: '#8aad92', accent: '#a5d6a7', white: '#d4f0d8', urgent: '#ffab91' } },
+            { name: '🫐 บลูเบอร์รี่', colors: { bg: '#171b24', surface: '#202536', surface2: '#292f47', surface3: '#323958', border: '#3b4369', border2: '#47507a', text: '#e8eeff', textSoft: '#b8c8ff', textMuted: '#8c9acf', accent: '#a0b4ff', white: '#d0dcff', urgent: '#ff9e9e' } },
+            { name: '🍓 สตรอว์เบอร์รี่', colors: { bg: '#1f171a', surface: '#2d2025', surface2: '#3a2930', surface3: '#47323b', border: '#543b46', border2: '#634853', text: '#ffe8ed', textSoft: '#ffb8c6', textMuted: '#c48b9b', accent: '#ff9eb5', white: '#ffd0da', urgent: '#ff6b8b' } },
+            { name: '🍋 เลมอน', colors: { bg: '#1e1c16', surface: '#2b2820', surface2: '#38342a', surface3: '#454034', border: '#524c3e', border2: '#615a4b', text: '#fffae6', textSoft: '#ffe699', textMuted: '#bfb380', accent: '#ffe066', white: '#fff3c4', urgent: '#ffaa66' } },
+            { name: '🌊 มิ้นท์โอเชี่ยน', colors: { bg: '#141c1c', surface: '#1c2828', surface2: '#243434', surface3: '#2c4040', border: '#344c4c', border2: '#3f5a5a', text: '#e0f5f5', textSoft: '#a0e0e0', textMuted: '#7aadad', accent: '#7fd4d4', white: '#c0f0f0', urgent: '#ffb3b3' } },
+            { name: '🍇 องุ่นหวาน', colors: { bg: '#1a1722', surface: '#262131', surface2: '#322b40', surface3: '#3e354f', border: '#4a3f5e', border2: '#594c70', text: '#f0e8ff', textSoft: '#c8b0ff', textMuted: '#9e8acf', accent: '#c4a8ff', white: '#e0d0ff', urgent: '#ff9ec4' } },
+            { name: '🥝 กีวี่', colors: { bg: '#181e16', surface: '#222b1f', surface2: '#2c3828', surface3: '#364531', border: '#40523a', border2: '#4d6245', text: '#ebf5e6', textSoft: '#bde0ae', textMuted: '#8fb380', accent: '#a5d68e', white: '#d0f0c0', urgent: '#ffb08a' } },
+            { name: '🌸 คอตตอนแคนดี้', colors: { bg: '#1c1720', surface: '#282230', surface2: '#342d40', surface3: '#403850', border: '#4c4360', border2: '#5b5072', text: '#f5eaff', textSoft: '#e0b8ff', textMuted: '#b894d4', accent: '#d9a8ff', white: '#ecd4ff', urgent: '#ff9eb5' } },
+            { name: '🍯 ฮันนี่', colors: { bg: '#1c1914', surface: '#29251e', surface2: '#363128', surface3: '#433d32', border: '#50493c', border2: '#5f5749', text: '#fff5e6', textSoft: '#ffd699', textMuted: '#bfa880', accent: '#ffcc66', white: '#ffe8b3', urgent: '#ff9966' } },
+            { name: '🦋 บัตเตอร์ฟลาย', colors: { bg: '#181b24', surface: '#222738', surface2: '#2c334c', surface3: '#363f60', border: '#404b74', border2: '#4e5a88', text: '#eef2ff', textSoft: '#b8ccff', textMuted: '#8c9ed4', accent: '#9eb8ff', white: '#ccddff', urgent: '#ffa3b8' } },
+            { name: '🌸 เชอร์รี่บลอสซั่ม', colors: { bg: '#1c161c', surface: '#2a202a', surface2: '#382a38', surface3: '#463446', border: '#543e54', border2: '#654b65', text: '#fce8fc', textSoft: '#e8b8e8', textMuted: '#c28fc2', accent: '#e8a8e8', white: '#f5d0f5', urgent: '#ff8cb8' } },
+            { name: '🥥 โคโคนัท', colors: { bg: '#1a1816', surface: '#262320', surface2: '#322e2a', surface3: '#3e3934', border: '#4a443e', border2: '#59524b', text: '#f5eee6', textSoft: '#e0ccb3', textMuted: '#b3a088', accent: '#d9b38c', white: '#f0dcc8', urgent: '#ffaa88' } },
+            { name: '🌵 คัตตัส', colors: { bg: '#151c17', surface: '#1e2821', surface2: '#27342b', surface3: '#304035', border: '#394c3f', border2: '#455a4c', text: '#e6f5e6', textSoft: '#a8e0a8', textMuted: '#7dad7d', accent: '#80cc80', white: '#b8e8b8', urgent: '#ffb899' } },
+            { name: '🦄 ยูนิคอร์น', colors: { bg: '#1a1722', surface: '#272233', surface2: '#342d44', surface3: '#413855', border: '#4e4366', border2: '#5e517a', text: '#f5eaff', textSoft: '#d4b8ff', textMuted: '#ad8fd4', accent: '#c8a0ff', white: '#e0ccff', urgent: '#ffa0c8' } },
+            { name: '🍦 วานิลลา', colors: { bg: '#1c1a17', surface: '#292620', surface2: '#363229', surface3: '#433e32', border: '#504a3b', border2: '#5f5947', text: '#fff8e6', textSoft: '#ffe8b3', textMuted: '#bfb080', accent: '#ffd966', white: '#fff0c0', urgent: '#ffaa77' } },
+            { name: '🌹 โรสควอตซ์', colors: { bg: '#1c171b', surface: '#2a2028', surface2: '#382935', surface3: '#463242', border: '#543b4f', border2: '#65475e', text: '#ffe8f0', textSoft: '#ffb8d0', textMuted: '#cf8ca8', accent: '#ffa8c8', white: '#ffd0e0', urgent: '#ff7b9c' } },
+            { name: '🍫 มอคค่า', colors: { bg: '#191614', surface: '#25201c', surface2: '#312a24', surface3: '#3d342c', border: '#493e34', border2: '#584b3f', text: '#f5ebe0', textSoft: '#e0c4a8', textMuted: '#b39c84', accent: '#ccaa88', white: '#e8d4c0', urgent: '#ff9988' } }
+        ];
+
         // ─── SAMPLE DATA (ว่างเปล่า) ─────────────────────────────────────────────
         const todayStrNexo = () => {
             const d = new Date();
@@ -1526,7 +1549,6 @@
         };
 
         // ─── BANNER SLIDER COMPONENT ──────────────────────────────────────────────
-        // ─── BANNER SLIDER COMPONENT (แก้ไขใหม่ - สไลด์ทีละภาพ) ───────────────────────
         const BannerSliderNexo = ({ bannerImage }) => {
             const urls = bannerImage ? bannerImage.split(',').map(u => u.trim()).filter(Boolean) : [];
             const [currentIndex, setCurrentIndex] = useState(0);
@@ -1729,7 +1751,7 @@
 
             // Settings state
             const [showSettingsModal, setShowSettingsModal] = useState(false);
-            const [appTitle, setAppTitle] = useState('NEXO CHECK_Q');
+            const [appTitle, setAppTitle] = useState('CHECK_Q');
             const [appSubtitle, setAppSubtitle] = useState('QUEUE MANAGEMENT');
             const [announcementText, setAnnouncementText] = useState('');
             const [selectedFont, setSelectedFont] = useState('Noto Sans Thai');
@@ -1747,6 +1769,7 @@
                 white: '#ffffff',
                 urgent: '#c0392b'
             });
+            const [selectedThemePreset, setSelectedThemePreset] = useState(null);
 
             // New state for background type
             const [bgType, setBgType] = useState('color'); // 'color' or 'image'
@@ -1758,7 +1781,13 @@
             const [currentPage, setCurrentPage] = useState(1);
             const PAGE_SIZE = 10;
 
-            const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbx4bJll2d6Vh3V6ggeghzpZgMic7AdHdmL1UDbcJcyDa6aCvWscKWrXNhtq6h32McvChw/exec";
+            const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbznF9Kiush95oWYYj1DAZrFpkrHtqpbj1cX-rhRZlH8zzKK6lChCToo29g6CAI-xNUBvA/exec";
+
+            // ฟังก์ชัน apply theme preset
+            const applyThemePreset = (theme) => {
+                setThemeColors(theme.colors);
+                setSelectedThemePreset(theme.name);
+            };
 
             // Apply selected font to body
             useEffect(() => {
@@ -1798,7 +1827,6 @@
                 setTasks(prev => prev.map(t => t.type === oldType ? { ...t, type: newType } : t));
                 if (URL_WEB_APP) {
                     fetchAPINexo({ action: 'saveTaskTypes', taskTypes: updatedTypes });
-                    fetchAPINexo({ action: 'updateTaskType', oldType, newType });
                 }
             };
 
@@ -1825,7 +1853,6 @@
                 setTasks(prev => prev.map(t => t.channel === oldChannel ? { ...t, channel: newChannel } : t));
                 if (URL_WEB_APP) {
                     fetchAPINexo({ action: 'saveChannels', channels: updatedChannels });
-                    fetchAPINexo({ action: 'updateTaskChannel', oldChannel, newChannel });
                 }
             };
 
@@ -2031,6 +2058,7 @@
                     return t;
                 }));
             }, []);
+
             const toggleDoing = useCallback((e, id) => {
                 e.stopPropagation();
                 setTasks(prev => prev.map(t => {
@@ -2046,13 +2074,13 @@
             const handleBannerSave = (e) => {
                 e.preventDefault();
                 if (tempBannerUrl) {
-                    // normalize: รองรับทั้ง newline และ comma เป็น comma-separated
                     const normalized = tempBannerUrl.split(/[\n,]+/).map(u => u.trim()).filter(Boolean).join(',');
                     setBannerImage(normalized);
                     if (URL_WEB_APP) fetchAPINexo({ action: 'saveBannerImage', imageUrl: normalized });
                 }
                 setShowBannerModal(false); setTempBannerUrl('');
             };
+
             const handleImageSave = (e) => {
                 e.preventDefault();
                 if (tempImageUrl) {
@@ -2097,7 +2125,6 @@
                 if (changePwNew !== changePwConfirm) { setChangePwError('รหัสผ่านใหม่ไม่ตรงกัน'); return; }
                 setChangePwLoading(true);
                 if (!URL_WEB_APP) {
-                    // fallback: ไม่มี backend ให้แจ้งว่าสำเร็จ (demo mode)
                     setTimeout(() => {
                         setChangePwLoading(false);
                         setChangePwSuccess(true);
@@ -2135,15 +2162,14 @@
                     white: '#ffffff',
                     urgent: '#c0392b'
                 });
+                setSelectedThemePreset(null);
             };
 
             const todayDisplay = new Date().toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             const monthTasksCount = tasks.filter(t => t.deadline?.startsWith(todayNexo.slice(0, 7))).length;
 
             const [selectedQueueType, setSelectedQueueType] = useState('normal');
-            const [formData, setFormData] = useState({});
 
-            // สถานะสำหรับฟอร์ม
             const statusOptions = [
                 { value: 'notstarted', label: 'ยังไม่ได้เริ่ม', color: '#888', icon: '⚪' },
                 { value: 'waiting', label: 'รอคิว', color: '#fbbf24', icon: '🟡' },
@@ -2163,7 +2189,6 @@
                         {/* ── HEADER ─────────────────────────────────────────────────── */}
                         <header style={{ padding: '16px 16px 0', position: 'sticky', top: 0, zIndex: 50, background: 'rgba(10,10,10,0.9)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--border-nexo)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 14 }}>
-                                {/* Logo */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                     <div
                                         style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--surface2-nexo)', border: '1px solid var(--border2-nexo)', overflow: 'hidden', cursor: isAdmin ? 'pointer' : 'default', flexShrink: 0 }}
@@ -2183,7 +2208,6 @@
                                     </div>
                                 </div>
 
-                                {/* Right controls */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                     {isAdmin && (
                                         <>
@@ -2192,7 +2216,7 @@
                                                 style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', fontSize: 12 }}
                                                 onClick={() => { setEditingTask(null); setSelectedQueueType('normal'); setShowModal(true); }}
                                             >
-                                                <IconsNexo.Plus s={14} /> เพิ่มคิวงาน
+                                                <IconsNexo.Plus s={14} /> เพิ่ม Q
                                             </button>
                                             <button
                                                 onClick={() => setShowSettingsModal(true)}
@@ -2399,12 +2423,6 @@
                             <div style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', background: 'var(--surface-nexo)', border: '1px solid var(--border-nexo)', minHeight: bannerImage ? 140 : 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <BannerSliderNexo bannerImage={bannerImage} />
                                 {bannerImage && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%)', pointerEvents: 'none' }}></div>}
-                                {bannerImage && (
-                                    <div style={{ position: 'absolute', bottom: 10, left: 14 }}>
-                                        {/* <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>ร้านซ่อมคอมพิวเตอร์</div>
-                                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Computer Repair &amp; Service</div> */}
-                                    </div>
-                                )}
                                 {isAdmin && (
                                     <button
                                         onClick={() => { setTempBannerUrl(bannerImage || ''); setShowBannerModal(true); }}
@@ -2438,7 +2456,6 @@
 
                             {/* ── STATS BENTO ─────────────────────────────────────────── */}
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                                {/* Monthly */}
                                 <div className="stat-card-nexo">
                                     <div style={{ fontSize: 9, color: 'var(--text-muted-nexo)', letterSpacing: '0.1em', marginBottom: 8 }}>คิวงานเดือนนี้</div>
                                     <div className="mono-nexo" style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-nexo)', lineHeight: 1 }}>{monthTasksCount}</div>
@@ -2448,7 +2465,6 @@
                                     </div>
                                 </div>
 
-                                {/* Daily progress */}
                                 <div className="stat-card-nexo">
                                     <div style={{ fontSize: 9, color: 'var(--text-muted-nexo)', letterSpacing: '0.1em', marginBottom: 8 }}>ความคืบหน้าวันนี้</div>
                                     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
@@ -2461,7 +2477,6 @@
                                     </div>
                                 </div>
 
-                                {/* Waiting */}
                                 <div className="stat-card-nexo" style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                     <div>
                                         <div style={{ fontSize: 9, color: 'var(--text-muted-nexo)', letterSpacing: '0.1em', marginBottom: 4 }}>คิวงานที่รอดำเนินการ</div>
@@ -2707,7 +2722,7 @@
                                             <div style={{ marginTop: 16 }}>
                                                 <div className="color-picker-row-nexo">
                                                     <label>สีพื้นหลัง (BG)</label>
-                                                    <input type="color" value={themeColors.bg} onChange={e => setThemeColors({ ...themeColors, bg: e.target.value })} />
+                                                    <input type="color" value={themeColors.bg} onChange={e => { setThemeColors({ ...themeColors, bg: e.target.value }); setSelectedThemePreset(null); }} />
                                                 </div>
                                                 <div style={{ fontSize: 10, color: 'var(--text-muted-nexo)', marginTop: 8 }}>
                                                     💡 สีพื้นหลังนี้จะใช้กับทั้งแอพพลิเคชั่น
@@ -2735,7 +2750,7 @@
                                                     type="text"
                                                     value={appTitle}
                                                     onChange={e => setAppTitle(e.target.value)}
-                                                    placeholder="NEXO CHECK_Q"
+                                                    placeholder="CHECK_Q"
                                                     style={{ fontFamily: 'Space Mono, monospace' }}
                                                 />
                                             </div>
@@ -2773,7 +2788,7 @@
                                                     </div>
                                                     <div>
                                                         <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-nexo)' }}>ปรับแต่งสีธีม</div>
-                                                        <div style={{ fontSize: 11, color: 'var(--text-muted-nexo)' }}>แก้ไขสีทั้งหมดของระบบ</div>
+                                                        <div style={{ fontSize: 11, color: 'var(--text-muted-nexo)' }}>เลือกธีมสำเร็จรูปหรือปรับแต่งเอง</div>
                                                     </div>
                                                 </div>
                                                 <button
@@ -2786,50 +2801,138 @@
                                                 </button>
                                             </div>
 
+                                            {/* ─── PRESET THEMES GRID ───────────────────────────────────── */}
+                                            <div style={{ marginBottom: 24 }}>
+                                                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-soft-nexo)', marginBottom: 12, letterSpacing: '0.05em' }}>
+                                                    🎨 ธีมสำเร็จรูป (20 ธีมพาสเทล)
+                                                </div>
+                                                <div style={{
+                                                    display: 'grid',
+                                                    gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
+                                                    gap: 8,
+                                                    maxHeight: 200,
+                                                    overflowY: 'auto',
+                                                    padding: '4px',
+                                                    background: 'var(--surface-nexo)',
+                                                    borderRadius: 12,
+                                                    border: '1px solid var(--border-nexo)'
+                                                }}>
+                                                    {PASTEL_THEMES.map((theme, idx) => {
+                                                        const c = theme.colors;
+                                                        return (
+                                                            <div
+                                                                key={idx}
+                                                                onClick={() => applyThemePreset(theme)}
+                                                                style={{
+                                                                    padding: '8px 6px',
+                                                                    borderRadius: 8,
+                                                                    background: selectedThemePreset === theme.name ? 'var(--surface3-nexo)' : 'var(--surface2-nexo)',
+                                                                    border: selectedThemePreset === theme.name ? '2px solid var(--accent-nexo)' : '1px solid var(--border-nexo)',
+                                                                    cursor: 'pointer',
+                                                                    transition: 'all 0.15s',
+                                                                    textAlign: 'center'
+                                                                }}
+                                                                onMouseEnter={e => {
+                                                                    if (selectedThemePreset !== theme.name) {
+                                                                        e.currentTarget.style.background = 'var(--surface3-nexo)';
+                                                                        e.currentTarget.style.borderColor = 'var(--border2-nexo)';
+                                                                    }
+                                                                }}
+                                                                onMouseLeave={e => {
+                                                                    if (selectedThemePreset !== theme.name) {
+                                                                        e.currentTarget.style.background = 'var(--surface2-nexo)';
+                                                                        e.currentTarget.style.borderColor = 'var(--border-nexo)';
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <div style={{
+                                                                    display: 'flex',
+                                                                    justifyContent: 'center',
+                                                                    gap: 2,
+                                                                    marginBottom: 6
+                                                                }}>
+                                                                    <div style={{ width: 14, height: 14, borderRadius: 4, background: c.accent }} title="Accent"></div>
+                                                                    <div style={{ width: 14, height: 14, borderRadius: 4, background: c.surface }} title="Surface"></div>
+                                                                    <div style={{ width: 14, height: 14, borderRadius: 4, background: c.urgent }} title="Urgent"></div>
+                                                                </div>
+                                                                <div style={{
+                                                                    fontSize: 10,
+                                                                    color: selectedThemePreset === theme.name ? 'var(--accent-nexo)' : 'var(--text-soft-nexo)',
+                                                                    fontWeight: selectedThemePreset === theme.name ? 700 : 500,
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis'
+                                                                }}>
+                                                                    {theme.name}
+                                                                </div>
+                                                                {selectedThemePreset === theme.name && (
+                                                                    <div style={{ fontSize: 14, marginTop: 2 }}>✨</div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                                <div style={{ fontSize: 10, color: 'var(--text-muted-nexo)', marginTop: 8, textAlign: 'center' }}>
+                                                    {selectedThemePreset ? `✨ กำลังใช้ธีม "${selectedThemePreset}"` : '💡 คลิกที่ธีมเพื่อเลือกใช้'}
+                                                </div>
+                                            </div>
+
+                                            {/* Divider */}
+                                            <div style={{ height: 1, background: 'var(--border-nexo)', margin: '20px 0' }}></div>
+
+                                            {/* ─── ADVANCED COLOR CUSTOMIZATION ────────────────────────── */}
+                                            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-soft-nexo)', marginBottom: 12, letterSpacing: '0.05em' }}>
+                                                🔧 ปรับแต่งสีขั้นสูง
+                                            </div>
+
                                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
                                                 <div className="color-picker-row-nexo">
+                                                    <label>พื้นหลัง (BG)</label>
+                                                    <input type="color" value={themeColors.bg} onChange={e => { setThemeColors({ ...themeColors, bg: e.target.value }); setSelectedThemePreset(null); }} />
+                                                </div>
+                                                <div className="color-picker-row-nexo">
                                                     <label>พื้นผิว (Surface)</label>
-                                                    <input type="color" value={themeColors.surface} onChange={e => setThemeColors({ ...themeColors, surface: e.target.value })} />
+                                                    <input type="color" value={themeColors.surface} onChange={e => { setThemeColors({ ...themeColors, surface: e.target.value }); setSelectedThemePreset(null); }} />
                                                 </div>
                                                 <div className="color-picker-row-nexo">
                                                     <label>พื้นผิว 2</label>
-                                                    <input type="color" value={themeColors.surface2} onChange={e => setThemeColors({ ...themeColors, surface2: e.target.value })} />
+                                                    <input type="color" value={themeColors.surface2} onChange={e => { setThemeColors({ ...themeColors, surface2: e.target.value }); setSelectedThemePreset(null); }} />
                                                 </div>
                                                 <div className="color-picker-row-nexo">
                                                     <label>พื้นผิว 3</label>
-                                                    <input type="color" value={themeColors.surface3} onChange={e => setThemeColors({ ...themeColors, surface3: e.target.value })} />
+                                                    <input type="color" value={themeColors.surface3} onChange={e => { setThemeColors({ ...themeColors, surface3: e.target.value }); setSelectedThemePreset(null); }} />
                                                 </div>
                                                 <div className="color-picker-row-nexo">
                                                     <label>ขอบ (Border)</label>
-                                                    <input type="color" value={themeColors.border} onChange={e => setThemeColors({ ...themeColors, border: e.target.value })} />
+                                                    <input type="color" value={themeColors.border} onChange={e => { setThemeColors({ ...themeColors, border: e.target.value }); setSelectedThemePreset(null); }} />
                                                 </div>
                                                 <div className="color-picker-row-nexo">
                                                     <label>ขอบ 2</label>
-                                                    <input type="color" value={themeColors.border2} onChange={e => setThemeColors({ ...themeColors, border2: e.target.value })} />
+                                                    <input type="color" value={themeColors.border2} onChange={e => { setThemeColors({ ...themeColors, border2: e.target.value }); setSelectedThemePreset(null); }} />
                                                 </div>
                                                 <div className="color-picker-row-nexo">
                                                     <label>ข้อความหลัก</label>
-                                                    <input type="color" value={themeColors.text} onChange={e => setThemeColors({ ...themeColors, text: e.target.value })} />
+                                                    <input type="color" value={themeColors.text} onChange={e => { setThemeColors({ ...themeColors, text: e.target.value }); setSelectedThemePreset(null); }} />
                                                 </div>
                                                 <div className="color-picker-row-nexo">
                                                     <label>ข้อความรอง</label>
-                                                    <input type="color" value={themeColors.textSoft} onChange={e => setThemeColors({ ...themeColors, textSoft: e.target.value })} />
+                                                    <input type="color" value={themeColors.textSoft} onChange={e => { setThemeColors({ ...themeColors, textSoft: e.target.value }); setSelectedThemePreset(null); }} />
                                                 </div>
                                                 <div className="color-picker-row-nexo">
                                                     <label>ข้อความจาง</label>
-                                                    <input type="color" value={themeColors.textMuted} onChange={e => setThemeColors({ ...themeColors, textMuted: e.target.value })} />
+                                                    <input type="color" value={themeColors.textMuted} onChange={e => { setThemeColors({ ...themeColors, textMuted: e.target.value }); setSelectedThemePreset(null); }} />
                                                 </div>
                                                 <div className="color-picker-row-nexo">
                                                     <label>สีเน้น (Accent)</label>
-                                                    <input type="color" value={themeColors.accent} onChange={e => setThemeColors({ ...themeColors, accent: e.target.value })} />
+                                                    <input type="color" value={themeColors.accent} onChange={e => { setThemeColors({ ...themeColors, accent: e.target.value }); setSelectedThemePreset(null); }} />
                                                 </div>
                                                 <div className="color-picker-row-nexo">
                                                     <label>สีขาว</label>
-                                                    <input type="color" value={themeColors.white} onChange={e => setThemeColors({ ...themeColors, white: e.target.value })} />
+                                                    <input type="color" value={themeColors.white} onChange={e => { setThemeColors({ ...themeColors, white: e.target.value }); setSelectedThemePreset(null); }} />
                                                 </div>
                                                 <div className="color-picker-row-nexo">
                                                     <label>สีด่วน (Urgent)</label>
-                                                    <input type="color" value={themeColors.urgent} onChange={e => setThemeColors({ ...themeColors, urgent: e.target.value })} />
+                                                    <input type="color" value={themeColors.urgent} onChange={e => { setThemeColors({ ...themeColors, urgent: e.target.value }); setSelectedThemePreset(null); }} />
                                                 </div>
                                             </div>
                                         </div>
